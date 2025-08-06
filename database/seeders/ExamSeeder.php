@@ -16,7 +16,8 @@ class ExamSeeder extends Seeder
         Exam::create([
             'title' => 'Radio Communication Exam',
             'exam_date' => '2025-08-10',
-            'duration_minutes' => 30
+            'duration_minutes' => 30,
+            'number_of_questions' => 30,
         ]);
     }
 }
