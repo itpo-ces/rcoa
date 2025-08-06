@@ -12,23 +12,27 @@ class ExamDateMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $exam = Exam::first();
-        $now = now();
 
         if (!$exam) {
-            return redirect()->route('welcome')->with('error', 'Exam settings not found.');
+            return redirect()->route('welcome')->with('error', 'Exam not found.');
         }
 
-        // Check if today is the exam date
-        if ($now->format('Y-m-d') !== $exam->exam_date->format('Y-m-d')) {
-            return redirect()->route('welcome')->with('error', 'This application is only available on ' . $exam->exam_date->format('F j, Y') . ' between ' . date('g:i A', strtotime($exam->start_time)) . ' to ' . date('g:i A', strtotime($exam->end_time)) . ' (PHT)');
+        $now = now(); // Automatically uses Asia/Manila if app timezone is set
+        $examDate = $exam->exam_date->format('Y-m-d');
+        $today = $now->format('Y-m-d');
+
+        if ($today !== $examDate) {
+            return redirect()->route('welcome')->with('error', 'This application is only available on ' . $exam->exam_date->format('F j, Y'));
         }
 
-        // Check if within allowed time range
-        $currentTime = $now->format('H:i:s');
-        if ($currentTime < $exam->start_time || $currentTime > $exam->end_time) {
-            return redirect()->route('welcome')->with('error', 'This application is only available today from ' . date('g:i A', strtotime($exam->start_time)) . ' to ' . date('g:i A', strtotime($exam->end_time)) . ' (PHT)');
+        $startTime = now()->setTimeFromTimeString($exam->start_time);
+        $endTime = now()->setTimeFromTimeString($exam->end_time);
+
+        if ($now->lt($startTime) || $now->gt($endTime)) {
+            return redirect()->route('welcome')->with('error', 'This application is only available today from ' . $startTime->format('g:i A') . ' to ' . $endTime->format('g:i A') . ' (PHT)');
         }
 
         return $next($request);
     }
+
 }
