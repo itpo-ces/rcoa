@@ -9,19 +9,26 @@ use App\Models\Exam;
 
 class ExamDateMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        $examDate = Exam::first()->exam_date;
-    
-        if (now()->format('Y-m-d') !== $examDate->format('Y-m-d')) {
-            return redirect()->route('welcome')->with('error', 'The exam is only accessible on ' . $examDate->format('F j, Y'));
+        $exam = Exam::first();
+        $now = now();
+
+        if (!$exam) {
+            return redirect()->route('welcome')->with('error', 'Exam settings not found.');
         }
-        
+
+        // Check if today is the exam date
+        if ($now->format('Y-m-d') !== $exam->exam_date->format('Y-m-d')) {
+            return redirect()->route('welcome')->with('error', 'This application is only available on ' . $exam->exam_date->format('F j, Y') . ' between ' . date('g:i A', strtotime($exam->start_time)) . ' to ' . date('g:i A', strtotime($exam->end_time)) . ' (PHT)');
+        }
+
+        // Check if within allowed time range
+        $currentTime = $now->format('H:i:s');
+        if ($currentTime < $exam->start_time || $currentTime > $exam->end_time) {
+            return redirect()->route('welcome')->with('error', 'This application is only available today from ' . date('g:i A', strtotime($exam->start_time)) . ' to ' . date('g:i A', strtotime($exam->end_time)) . ' (PHT)');
+        }
+
         return $next($request);
     }
 }

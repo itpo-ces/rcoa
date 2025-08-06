@@ -8,12 +8,21 @@ class Exam extends Model
 {
     protected $table = 'exams';
 
-    protected $fillable = ['title', 'exam_date', 'duration_minutes', 'number_of_questions'];
+    protected $fillable = [
+        'title',
+        'exam_date',
+        'start_time',
+        'end_time',
+        'duration_minutes',
+        'number_of_questions'
+    ];
 
     protected $casts = [
         'exam_date' => 'date',
         'duration_minutes' => 'integer',
         'number_of_questions' => 'integer',
+        'start_time' => 'datetime:H:i:s',
+        'end_time' => 'datetime:H:i:s',
     ];
     
     public function questions()

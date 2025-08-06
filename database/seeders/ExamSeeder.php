@@ -17,6 +17,8 @@ class ExamSeeder extends Seeder
             'title' => 'Radio Communication Exam',
             'exam_date' => '2025-08-10',
             'duration_minutes' => 30,
+            'start_time' => '08:00:00',
+            'end_time' => '20:00:00',
             'number_of_questions' => 30,
         ]);
     }
