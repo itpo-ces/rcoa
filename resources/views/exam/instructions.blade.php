@@ -63,3 +63,39 @@
     </div>
 </div>
 @endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        // Show SweetAlert message if session has success or error
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: "{{ session('success') }}"
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: "{{ session('error') }}"
+            });
+        @endif
+
+        // Attach submit event to the form
+        $('form').on('submit', function(e) {
+            Swal.fire({
+                title: 'Loading Questions...',
+                html: 'Please wait while we load the questions...',
+                allowEscapeKey: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading(); // Show the loading spinner
+                }
+            });
+        });
+    });
+</script>
+@endsection

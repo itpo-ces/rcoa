@@ -145,7 +145,7 @@
                         <div class="form-group row">
                             <label for="station" class="col-md-4 col-form-label text-md-right">Station</label>
                             <div class="col-md-6">
-                                <select id="station" class="form-control select2 @error('station') is-invalid @enderror" style="width: 100%;" name="station" required>
+                                <select id="station" class="form-control select2 @error('station') is-invalid @enderror" style="width: 100%;" name="station">
                                     <option value="" selected>Select Station</option>
                                 </select>
                                 @error('station')
@@ -173,6 +173,39 @@
 
 @section('scripts')
 <script>
+    $(document).ready(function() {
+        // Show SweetAlert message if session has success or error
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: "{{ session('success') }}"
+            });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: "{{ session('error') }}"
+            });
+        @endif
+
+        // Attach submit event to the form
+        $('form').on('submit', function(e) {
+            Swal.fire({
+                title: 'Submitting...',
+                html: 'Please wait while we submit your registration...',
+                allowEscapeKey: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading(); // Show the loading spinner
+                }
+            });
+        });
+    });
+</script>
+<script>
     document.addEventListener('DOMContentLoaded', function () {
         $(document).ready(function () {
             var unitSelect = $('#unit');
@@ -186,10 +219,10 @@
                 console.log(selectedUnitId);
 
                 // Clear and reset subunit and station dropdowns
-                subunitSelect.empty().append($('<option>', { value: 'NONE', text: 'Select Subunit', selected: true }));
-                stationSelect.empty().append($('<option>', { value: 'NONE', text: 'Select Station', selected: true }));
+                subunitSelect.empty().append($('<option>', { value: '', text: 'Select Subunit', selected: true }));
+                stationSelect.empty().append($('<option>', { value: '', text: 'Select Station', selected: true }));
 
-                if (selectedUnitId !== 'NONE') {
+                if (selectedUnitId !== '') {
                     $.get('{{ route("getPersonnelSubunits") }}', { unitId: selectedUnitId }, function (data) {
                         data.forEach(function (subunit) {
                             subunitSelect.append($('<option>', {
@@ -208,9 +241,9 @@
                 console.log(selectedSubunitId);
 
                 // Clear and reset station dropdown
-                stationSelect.empty().append($('<option>', { value: 'NONE', text: 'Select Station', selected: true }));
+                stationSelect.empty().append($('<option>', { value: '', text: 'Select Station', selected: true }));
 
-                if (selectedSubunitId !== 'NONE') {
+                if (selectedSubunitId !== '') {
                     $.get('{{ route("getPersonnelStations") }}', { subunitId: selectedSubunitId }, function (data) {
                         data.forEach(function (station) {
                             stationSelect.append($('<option>', {

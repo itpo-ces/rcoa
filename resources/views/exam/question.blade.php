@@ -101,15 +101,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="certificationModalLabel">Certification</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
             <div class="modal-body">
                 <p class="text-justify">I, <strong>{{ session('examinee_full_name') ?? '' }}</strong>, hereby certify that I took the online examination for Radio Communication on August 10, 2025 with honesty and integrity. I affirm that I did not use any unauthorized materials or receive any form of assistance during the exam.</p>
                 <p class="text-justify">I understand that any act of dishonesty may result in the invalidation of my exam and possible disciplinary action.</p>
                 
-                <form id="certification-form" action="{{ route('exam.submit') }}" method="POST">
+                <form id="certification-form">
                     @csrf
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="certify" name="certify" required>
@@ -120,14 +117,14 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="document.getElementById('certification-form').submit()">Submit Exam</button>
+                <button type="button" class="btn btn-primary" id="final-submit-btn" disabled>Submit Exam</button>
             </div>
         </div>
     </div>
 </div>
 
 @endsection
+
 @section('scripts')
 <script>
     @if(Session::has('error'))
@@ -146,6 +143,7 @@
 <script>
     // Timer functionality
     let remainingTime = {{ $remaining_time }}; // in seconds
+    let timerInterval;
 
     function updateTimer() {
         if (remainingTime > 0) {
@@ -153,21 +151,81 @@
             const seconds = remainingTime % 60;
             document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             document.getElementById('global-timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            remainingTime--; // Decrease every second
+            remainingTime--;
         } else {
-            document.getElementById('timer').textContent = "0:00";
-            toastr.error('Time is up! Your exam will be automatically submitted.');
-            document.getElementById('certification-form').submit();
-            document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            handleTimeExpired();
         }
     }
 
-    if (remainingTime > 0) {
-        setInterval(updateTimer, 1000);
+
+    function handleTimeExpired() {
+        clearInterval(timerInterval);
+        document.getElementById('timer').textContent = "0:00";
+        document.getElementById('global-timer').textContent = "0:00";
+        
+        // Disable all navigation buttons
+        document.querySelectorAll('.navigation-buttons a, .navigation-buttons button').forEach(btn => {
+            btn.disabled = true;
+        });
+        
+        // Save any pending answer first
+        saveCurrentAnswer().then(() => {
+            // Then show certification modal
+            $('#certificationModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            toastr.error('Time is up! Please certify and submit your exam.');
+        }).catch(error => {
+            console.error('Error saving answer:', error);
+            // Still show modal even if saving fails
+            $('#certificationModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            toastr.error('Time is up! Please certify and submit your exam.');
+        });
+    }
+
+    // Initialize timer
+    function initTimer() {
+        timerInterval = setInterval(updateTimer, 1000);
         updateTimer(); // Initial call to show immediately
     }
-    
-    // Save answer and continue
+
+    function saveCurrentAnswer() {
+        return new Promise((resolve, reject) => {
+            const form = document.getElementById('answer-form');
+            const formData = new FormData(form);
+            
+            fetch('{{ route("exam.save-answer") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    resolve();
+                } else {
+                    reject(new Error('Failed to save answer'));
+                }
+            })
+            .catch(error => {
+                reject(error);
+            });
+        });
+    }
+
+    // Save answer and continue to next question
     function saveAndContinue() {
         const form = document.getElementById('answer-form');
         const formData = new FormData(form);
@@ -177,7 +235,7 @@
             body: formData,
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json' // This tells Laravel we want JSON back
+                'Accept': 'application/json'
             }
         })
         .then(response => {
@@ -200,7 +258,7 @@
         });
     }
 
-    // Submit exam
+    // Show certification modal when manually submitting exam
     function submitExam() {
         const form = document.getElementById('answer-form');
         const formData = new FormData(form);
@@ -221,7 +279,10 @@
         })
         .then(data => {
             if (data.success) {
-                $('#certificationModal').modal('show');
+                $('#certificationModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
             }
         })
         .catch(error => {
@@ -232,5 +293,78 @@
             }
         });
     }
+
+    // Handle final exam submission from certification modal
+    function setupCertificationModal() {
+        const certifyCheckbox = document.getElementById('certify');
+        const submitBtn = document.getElementById('final-submit-btn');
+        
+        // Enable/disable submit button based on checkbox
+        certifyCheckbox.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+        
+        // Handle final submission
+        submitBtn.addEventListener('click', function() {
+            if (!certifyCheckbox.checked) {
+                toastr.error('You must certify the statement before submitting.', 'Error');
+                return;
+            }
+            
+            submitFinalExam();
+        });
+    }
+
+    // Final exam submission process
+    function submitFinalExam() {
+        // Show loading state
+        const submitBtn = document.getElementById('final-submit-btn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+        
+        fetch('{{ route("exam.submit") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                certify: true
+            })
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json().then(data => {
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        throw new Error('Submission failed');
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            toastr.error('An error occurred while submitting. Please try again.', 'Error');
+            console.error('Submission error:', error);
+        });
+    }
+
+    // Stop the timer when modal is shown
+    $('#certificationModal').on('show.bs.modal', function () {
+        clearInterval(timerInterval);
+        document.getElementById('timer').textContent = "0:00";
+    });
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initTimer();
+        setupCertificationModal();
+    });
 </script>
 @endsection

@@ -153,7 +153,6 @@ class ExamController extends Controller
         }
     }
 
-    
     public function instructions()
     {
         return view('exam.instructions');
@@ -271,7 +270,7 @@ class ExamController extends Controller
             ], 500); // Internal Server Error
         }
     }
-    
+
     public function submitExam(Request $request)
     {
         try {
@@ -284,8 +283,13 @@ class ExamController extends Controller
             $answers = session('answers', []);
             $examinee = Examinee::where('token_id', session('token_id'))->first();
 
-            if (!$examinee || !$questions->count()) {
-                return redirect()->route('exam.instructions')->with('error', 'Exam submission failed. Please try again.');
+            if (!$examinee) {
+                return redirect()->route('exam.instructions')->with('error', 'Examinee not found. Please try again.');
+            }
+
+            if (!$questions->count()) {
+                // If no questions, still create empty responses and show results
+                $questions = Question::whereIn('id', session('questions', []))->get();
             }
 
             $score = 0;
@@ -294,16 +298,9 @@ class ExamController extends Controller
                 $userAnswer = $answers[$question->id] ?? null;
                 $isCorrect = false;
 
-                if ($userAnswer) {
-                    switch ($question->type) {
-                        case 'multiple_choice':
-                        case 'true_or_false':
-                        case 'fill_in_the_blanks':
-                            // $isCorrect = strtolower(trim($userAnswer)) === strtolower(trim($question->correct_answer));
-                            $isCorrect = $this->normalizeAnswer($userAnswer) === $this->normalizeAnswer($question->correct_answer);
-                            break;
-                    }
-
+                // Record response even if empty
+                if ($userAnswer !== null) {
+                    $isCorrect = $this->normalizeAnswer($userAnswer) === $this->normalizeAnswer($question->correct_answer);
                     if ($isCorrect) {
                         $score++;
                     }
@@ -312,7 +309,7 @@ class ExamController extends Controller
                 ExamResponse::create([
                     'examinee_id' => $examinee->id,
                     'question_id' => $question->id,
-                    'response' => $userAnswer,
+                    'response' => $userAnswer ?? '',
                     'is_correct' => $isCorrect
                 ]);
             }
@@ -324,7 +321,8 @@ class ExamController extends Controller
             ]);
 
             // Calculate proficiency level
-            $percentage = ($score / max(1, count($questions))) * 100;
+            $totalQuestions = count($questions);
+            $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
 
             if ($percentage >= 90) {
                 $proficiency = 'Expert';
@@ -339,7 +337,7 @@ class ExamController extends Controller
             // Store results in session
             session([
                 'exam_score' => $score,
-                'total_questions' => count($questions),
+                'total_questions' => $totalQuestions,
                 'proficiency' => $proficiency
             ]);
 
@@ -347,7 +345,6 @@ class ExamController extends Controller
 
         } catch (\Exception $e) {
             \Log::error('Submit Exam Error: ' . $e->getMessage());
-
             return redirect()->route('exam.instructions')->with('error', 'An unexpected error occurred while submitting your exam. Please contact the administrator.');
         }
     }
@@ -380,7 +377,8 @@ class ExamController extends Controller
         return redirect()->route('welcome')->with('success', 'Exam session closed. Thank you!');
     }
     
-    public function getSubunits(Request $request){
+    public function getSubunits(Request $request)
+    {
         $unitId = $request->unitId;
         $subunit = Subunit::select('SubUnitId','Description')
                         ->where('UnitId',$unitId)
@@ -389,7 +387,8 @@ class ExamController extends Controller
         return response()->json($subunit);          
     }
 
-    public function getStations(Request $request){
+    public function getStations(Request $request)
+    {
         $subunitId = $request->subunitId;
         $station = Station::select('StationId','Name')
                         ->where('SubUnitId',$subunitId)
