@@ -17,7 +17,7 @@
                             <div class="col-md-6">
                                 <select id="rank" class="form-control select2 @error('rank') is-invalid @enderror" style="width: 100%;" name="rank" required>
                                     <option value="" selected disabled>Select Rank</option>
-                                    <option value="PGEN" @if(old('rank') == 'PGEN') selected @endif selected>PGEN</option>
+                                    <option value="PGEN" @if(old('rank') == 'PGEN') selected @endif>PGEN</option>
                                     <option value="PLTGEN" @if(old('rank') == 'PLTGEN') selected @endif>PLTGEN</option>
                                     <option value="PMGEN" @if(old('rank') == 'PMGEN') selected @endif>PMGEN</option>
                                     <option value="PBGEN" @if(old('rank') == 'PBGEN') selected @endif>PBGEN</option>
@@ -47,7 +47,7 @@
                         <div class="form-group row">
                             <label for="first_name" class="col-md-4 col-form-label text-md-right">First Name</label>
                             <div class="col-md-6">
-                                <input id="first_name" type="text" class="form-control @error('first_name') is-invalid @enderror" name="first_name" value="{{ old('first_name') ?? 'Lloyd'}}" required>
+                                <input id="first_name" type="text" class="form-control @error('first_name') is-invalid @enderror" name="first_name" value="{{ old('first_name')}}" required>
                                 @error('first_name')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -60,7 +60,7 @@
                         <div class="form-group row">
                             <label for="middle_name" class="col-md-4 col-form-label text-md-right">Middle Name</label>
                             <div class="col-md-6">
-                                <input id="middle_name" type="text" class="form-control @error('middle_name') is-invalid @enderror" name="middle_name" value="{{ old('middle_name') ?? 'Satore' }}">
+                                <input id="middle_name" type="text" class="form-control @error('middle_name') is-invalid @enderror" name="middle_name" value="{{ old('middle_name')}}">
                                 @error('middle_name')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
@@ -73,7 +73,7 @@
                         <div class="form-group row">
                             <label for="last_name" class="col-md-4 col-form-label text-md-right">Last Name</label>
                             <div class="col-md-6">
-                                <input id="last_name" type="text" class="form-control @error('last_name') is-invalid @enderror" name="last_name" value="{{ old('last_name') ?? 'Obordo'}}" required>
+                                <input id="last_name" type="text" class="form-control @error('last_name') is-invalid @enderror" name="last_name" value="{{ old('last_name')}}" required>
                                 @error('last_name')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>

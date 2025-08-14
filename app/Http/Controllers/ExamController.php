@@ -189,50 +189,140 @@ class ExamController extends Controller
         return view('exam.instructions');
     }
     
+    // public function startExam(Request $request)
+    // {
+    //     try {
+    //         // Validate that certification was accepted
+    //         if (!$request->has('certified') || $request->certified !== '1') {
+    //             return back()->with('error', 'You must certify the statement before starting the exam.');
+    //         }
+    //         $exam = Exam::first();
+
+    //         if (!$exam) {
+    //             return back()->with('error', 'Exam is not available. Please contact the administrator.');
+    //         }
+
+    //         // $questions = $exam->questions()->inRandomOrder()->get();
+
+    //         $questionLimit = $exam->number_of_questions ?? 30;
+
+    //         $questions = $exam->questions()
+    //                 ->where('is_active', 1)
+    //                 ->inRandomOrder()
+    //                 ->limit($questionLimit)
+    //                 ->get();
+
+    //         if ($questions->isEmpty()) {
+    //             return back()->with('error', 'No questions found for this exam.');
+    //         }
+
+    //         // Set session data
+    //         session([
+    //             'exam_started' => true,
+    //             'exam_start_time' => now()->toDateTimeString(),
+    //             'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+    //             'questions' => $questions->pluck('id')->toArray(),
+    //             'current_question' => 0,
+    //             'answers' => []
+    //         ]);
+
+    //         return redirect()->route('exam.question', ['question_number' => 1]);
+    //     } catch (\Exception $e) {
+    //         \Log::error('Start Exam Error: ' . $e->getMessage());
+
+    //         return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
+    //     }
+    // }
+    
+    
     public function startExam(Request $request)
-    {
-        try {
-            // Validate that certification was accepted
-            if (!$request->has('certified') || $request->certified !== '1') {
-                return back()->with('error', 'You must certify the statement before starting the exam.');
-            }
-            $exam = Exam::first();
-
-            if (!$exam) {
-                return back()->with('error', 'Exam is not available. Please contact the administrator.');
-            }
-
-            // $questions = $exam->questions()->inRandomOrder()->get();
-
-            $questionLimit = $exam->number_of_questions ?? 30;
-
-            $questions = $exam->questions()
-                    ->where('is_active', 1)
-                    ->inRandomOrder()
-                    ->limit($questionLimit)
-                    ->get();
-
-            if ($questions->isEmpty()) {
-                return back()->with('error', 'No questions found for this exam.');
-            }
-
-            // Set session data
-            session([
-                'exam_started' => true,
-                'exam_start_time' => now()->toDateTimeString(),
-                'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
-                'questions' => $questions->pluck('id')->toArray(),
-                'current_question' => 0,
-                'answers' => []
-            ]);
-
-            return redirect()->route('exam.question', ['question_number' => 1]);
-        } catch (\Exception $e) {
-            \Log::error('Start Exam Error: ' . $e->getMessage());
-
-            return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
+{
+    try {
+        // Validate that certification was accepted
+        if (!$request->has('certified') || $request->certified !== '1') {
+            return back()->with('error', 'You must certify the statement before starting the exam.');
         }
+        
+        $exam = Exam::first();
+
+        if (!$exam) {
+            return back()->with('error', 'Exam is not available. Please contact the administrator.');
+        }
+
+        $questionLimit = $exam->number_of_questions ?? 30;
+
+        // Calculate number of questions per difficulty level
+        $easyCount = ceil($questionLimit * 0.40);
+        $moderateCount = ceil($questionLimit * 0.30);
+        $difficultCount = ceil($questionLimit * 0.25);
+        $extraDifficultCount = ceil($questionLimit * 0.05);
+
+        // Adjust counts if they don't add up exactly due to rounding
+        $total = $easyCount + $moderateCount + $difficultCount + $extraDifficultCount;
+        if ($total > $questionLimit) {
+            // Reduce the largest category (usually easy)
+            $easyCount -= ($total - $questionLimit);
+        } elseif ($total < $questionLimit) {
+            // Add to the largest category
+            $easyCount += ($questionLimit - $total);
+        }
+
+        // Get questions for each difficulty level
+        $easyQuestions = $exam->questions()
+            ->where('is_active', 1)
+            ->where('difficulty', 'easy')
+            ->inRandomOrder()
+            ->limit($easyCount)
+            ->get();
+
+        $moderateQuestions = $exam->questions()
+            ->where('is_active', 1)
+            ->where('difficulty', 'moderate')
+            ->inRandomOrder()
+            ->limit($moderateCount)
+            ->get();
+
+        $difficultQuestions = $exam->questions()
+            ->where('is_active', 1)
+            ->where('difficulty', 'difficult')
+            ->inRandomOrder()
+            ->limit($difficultCount)
+            ->get();
+
+        $extraDifficultQuestions = $exam->questions()
+            ->where('is_active', 1)
+            ->where('difficulty', 'extra_difficult')
+            ->inRandomOrder()
+            ->limit($extraDifficultCount)
+            ->get();
+
+        // Combine all questions and shuffle them
+        $questions = $easyQuestions
+            ->concat($moderateQuestions)
+            ->concat($difficultQuestions)
+            ->concat($extraDifficultQuestions)
+            ->shuffle();
+
+        if ($questions->isEmpty()) {
+            return back()->with('error', 'No questions found for this exam.');
+        }
+
+        // Set session data
+        session([
+            'exam_started' => true,
+            'exam_start_time' => now()->toDateTimeString(),
+            'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+            'questions' => $questions->pluck('id')->toArray(),
+            'current_question' => 0,
+            'answers' => []
+        ]);
+
+        return redirect()->route('exam.question', ['question_number' => 1]);
+    } catch (\Exception $e) {
+        \Log::error('Start Exam Error: ' . $e->getMessage());
+        return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
     }
+}
     
     public function showQuestion($question_number)
     {
