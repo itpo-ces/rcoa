@@ -15,7 +15,7 @@ class Station extends Model
         return $this->belongsTo(Subunit::class, 'SubUnitId', 'SubUnitId');
     }
 
-    public function substation(){
-        return $this->hasMany(Substation::class, 'StationId', 'StationId');
-    }
+    // public function substation(){
+    //     return $this->hasMany(Substation::class, 'StationId', 'StationId');
+    // }
 }

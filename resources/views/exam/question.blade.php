@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('components.app')
 
 @section('content')
 <div class="container">
@@ -26,10 +26,10 @@
                                     <span class="badge badge-success">Easy</span>
                                 @elseif($question->difficulty === 'moderate')
                                     <span class="badge badge-warning">Moderate</span>
-                                @elseif($question->difficulty === 'hard')
-                                    <span class="badge badge-danger">Hard</span>
                                 @elseif($question->difficulty === 'difficult')
-                                    <span class="badge badge-dark">Difficult</span>
+                                    <span class="badge badge-danger">Difficult</span>
+                                @elseif($question->difficulty === 'extra_difficult')
+                                    <span class="badge badge-dark">Extra Difficult</span>
                                 @endif
                             @endif
                             <h5>{{ $question->question_text }}</h5>
@@ -68,6 +68,23 @@
                                         </label>
                                     </div>
                                 </div>
+                            @elseif($question->type === 'yes_or_no')
+                                <div class="options mt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="answer" id="yes" value="Yes"
+                                            @if(session("answers.{$question->id}") === 'Yes') checked @endif>
+                                        <label class="form-check-label" for="true">
+                                            Yes
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="answer" id="no" value="No"
+                                            @if(session("answers.{$question->id}") === 'No') checked @endif>
+                                        <label class="form-check-label" for="false">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
                             @elseif($question->type === 'fill_in_the_blanks')
                                 <div class="form-group mt-3">
                                     <input type="text" class="form-control" name="answer" value="{{ session("answers.{$question->id}") }}">
@@ -85,7 +102,7 @@
                             @if($question_number < $total_questions)
                                 <button type="button" class="btn btn-primary" onclick="saveAndContinue()">Next</button>
                             @else
-                                <button type="button" class="btn btn-success" onclick="submitExam()">Submit Exam</button>
+                                <button type="button" class="btn btn-success" onclick="validateAndSubmit()">Submit Exam</button>
                             @endif
                         </div>
                     </form>
@@ -103,8 +120,7 @@
                 <h5 class="modal-title" id="certificationModalLabel">Certification</h5>
             </div>
             <div class="modal-body">
-                <p class="text-justify">I, <strong>{{ session('examinee_full_name') ?? '' }}</strong>, hereby certify that I took the online examination for Radio Communication on August 10, 2025 with honesty and integrity. I affirm that I did not use any unauthorized materials or receive any form of assistance during the exam.</p>
-                <p class="text-justify">I understand that any act of dishonesty may result in the invalidation of my exam and possible disciplinary action.</p>
+                <p class="text-justify">I, <strong>{{ session('examinee_full_name') ?? '' }}</strong>, affirm that I personally took the online test for Radio Communication without any forms of assistance, whatsoever, during the test.</p>
                 
                 <form id="certification-form">
                     @csrf
@@ -117,7 +133,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="final-submit-btn" disabled>Submit Exam</button>
+                {{-- <button type="button" class="btn btn-primary" id="final-submit-btn" disabled>Submit Exam</button> --}}
+                <button type="button" class="btn btn-primary" id="final-submit-btn" disabled onclick="submitFinalExam()">Submit Exam</button>
             </div>
         </div>
     </div>
@@ -127,13 +144,13 @@
 
 @section('scripts')
 <script>
+    // Toastr notifications
     @if(Session::has('error'))
         toastr.error('{{ Session::get('error')}}', 'Administrator', {timeOut: 3000, progressBar: true});
     @elseif(Session::has('success'))
         toastr.success('{{ Session::get('success')}}', 'Administrator', {timeOut: 3000, progressBar: true});
     @endif
 
-    // Handle Validation Error Messages
     @if($errors->any())
       @foreach ($errors->all() as $error)
         toastr.error('{{ $error }}', 'Administrator', {timeOut: 3000, progressBar: true});
@@ -144,6 +161,7 @@
     // Timer functionality
     let remainingTime = {{ $remaining_time }}; // in seconds
     let timerInterval;
+    let timeExpired = false;
 
     function updateTimer() {
         if (remainingTime > 0) {
@@ -152,11 +170,11 @@
             document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             document.getElementById('global-timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             remainingTime--;
-        } else {
+        } else if (!timeExpired) {
+            timeExpired = true;
             handleTimeExpired();
         }
     }
-
 
     function handleTimeExpired() {
         clearInterval(timerInterval);
@@ -167,30 +185,38 @@
         document.querySelectorAll('.navigation-buttons a, .navigation-buttons button').forEach(btn => {
             btn.disabled = true;
         });
+
+        // Show "Time is up" message
+        toastr.error('⏰ Time is up! Saving your last answer...', 'Exam Ended', { timeOut: 2000, progressBar: true });
+
+        // Save last answer, then wait 3 seconds before redirect
+        saveCurrentAnswer()
+            .finally(() => {
+                setTimeout(() => {
+                    window.location.href = '{{ route("exam.certification") }}';
+                }, 3000); // 3 seconds
+            });
         
-        // Save any pending answer first
-        saveCurrentAnswer().then(() => {
-            // Then show certification modal
-            $('#certificationModal').modal({
-                backdrop: 'static',
-                keyboard: false
-            });
-            toastr.error('Time is up! Please certify and submit your exam.');
-        }).catch(error => {
-            console.error('Error saving answer:', error);
-            // Still show modal even if saving fails
-            $('#certificationModal').modal({
-                backdrop: 'static',
-                keyboard: false
-            });
-            toastr.error('Time is up! Please certify and submit your exam.');
-        });
+        // // Show certification modal immediately (don't wait for save)
+        // showCertificationModal('Time is up! Please certify and submit your exam.');
+        // Redirect to certification page
+        // window.location.href = '{{ route("exam.certification") }}';
     }
 
-    // Initialize timer
     function initTimer() {
         timerInterval = setInterval(updateTimer, 1000);
-        updateTimer(); // Initial call to show immediately
+        updateTimer();
+    }
+
+    function showCertificationModal(message) {
+        $('#certificationModal').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+        
+        if (message) {
+            toastr.error(message);
+        }
     }
 
     function saveCurrentAnswer() {
@@ -225,7 +251,6 @@
         });
     }
 
-    // Save answer and continue to next question
     function saveAndContinue() {
         const form = document.getElementById('answer-form');
         const formData = new FormData(form);
@@ -258,113 +283,81 @@
         });
     }
 
-    // Show certification modal when manually submitting exam
-    function submitExam() {
-        const form = document.getElementById('answer-form');
-        const formData = new FormData(form);
-        
-        fetch('{{ route("exam.save-answer") }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => Promise.reject(err));
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                $('#certificationModal').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                });
-            }
-        })
-        .catch(error => {
-            if (error.errors) {
-                toastr.error(error.errors.join('<br>'), 'Error', {timeOut: 5000, progressBar: true, escapeHtml: false});
-            } else {
-                toastr.error('An error occurred. Please try again.', 'Error');
-            }
+    function validateAndSubmit() {
+        saveCurrentAnswer().then(() => {
+            showCertificationModal();
+        }).catch(error => {
+            toastr.error('Error saving answer: ' + error.message);
         });
     }
 
-    // Handle final exam submission from certification modal
-    function setupCertificationModal() {
+    function submitFinalExam() {
         const certifyCheckbox = document.getElementById('certify');
         const submitBtn = document.getElementById('final-submit-btn');
         
-        // Enable/disable submit button based on checkbox
-        certifyCheckbox.addEventListener('change', function() {
-            submitBtn.disabled = !this.checked;
-        });
+        if (!certifyCheckbox.checked) {
+            toastr.error('You must certify the statement before submitting.', 'Error');
+            return;
+        }
         
-        // Handle final submission
-        submitBtn.addEventListener('click', function() {
-            if (!certifyCheckbox.checked) {
-                toastr.error('You must certify the statement before submitting.', 'Error');
-                return;
-            }
-            
-            submitFinalExam();
-        });
-    }
-
-    // Final exam submission process
-    function submitFinalExam() {
         // Show loading state
-        const submitBtn = document.getElementById('final-submit-btn');
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
         
-        fetch('{{ route("exam.submit") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                certify: true
-            })
-        })
-        .then(response => {
-            if (response.redirected) {
-                window.location.href = response.url;
-            } else {
-                return response.json().then(data => {
-                    if (data.redirect) {
-                        window.location.href = data.redirect;
-                    } else {
-                        throw new Error('Submission failed');
-                    }
+        // First save current answer (important for time-expired cases)
+        saveCurrentAnswer()
+            .then(() => {
+                // Then submit the exam
+                return fetch('{{ route("exam.submit") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        certify: true,
+                        time_expired: timeExpired
+                    })
                 });
-            }
-        })
-        .catch(error => {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-            toastr.error('An error occurred while submitting. Please try again.', 'Error');
-            console.error('Submission error:', error);
-        });
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.json();
+                }
+            })
+            .then(data => {
+                if (data && data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    throw new Error('Invalid response from server');
+                }
+            })
+            .catch(error => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                toastr.error('Submission failed. Please try again.', 'Error');
+                console.error('Submission error:', error);
+            });
     }
 
-    // Stop the timer when modal is shown
-    $('#certificationModal').on('show.bs.modal', function () {
-        clearInterval(timerInterval);
-        document.getElementById('timer').textContent = "0:00";
-    });
-
-    // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
         initTimer();
-        setupCertificationModal();
+        
+        document.getElementById('certify')?.addEventListener('change', function() {
+            const submitBtn = document.getElementById('final-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = !this.checked;
+            }
+        });
+        
+        $('#certificationModal').on('show.bs.modal', function () {
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = "0:00";
+        });
     });
 </script>
 @endsection

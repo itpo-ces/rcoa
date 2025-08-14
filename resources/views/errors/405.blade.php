@@ -72,6 +72,9 @@
             <br>
             Please check the URL or try again with a different method.
         </div>
+        <div class="back-home">
+            <a href="{{ route('welcome') }}">Back to Home</a>
+        </div>
     </div>
 </body>
 </html>

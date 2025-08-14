@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('exam_id')->constrained();
             $table->text('question_text');
-            $table->enum('type', ['multiple_choice', 'fill_in_the_blanks', 'true_or_false']);
-            $table->enum('difficulty', ['easy', 'moderate', 'hard', 'difficult']);
+            $table->enum('type', ['multiple_choice', 'fill_in_the_blanks', 'true_or_false', 'yes_or_no']);
+            $table->enum('difficulty', ['easy', 'moderate', 'difficult', 'extra difficult']);
             $table->text('correct_answer');
             $table->json('options')->nullable(); // For MCQs
             $table->timestamps();

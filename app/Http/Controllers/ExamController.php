@@ -17,6 +17,13 @@ class ExamController extends Controller
 {
     public function start()
     {
+        // Check if exam was started and time has expired
+        if (session()->has('exam_started')) {
+            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+            if ($remainingTime <= 0) {
+                return redirect()->route('exam.certification');
+            }
+        }
         return view('exam.start');
     }
     
@@ -56,6 +63,14 @@ class ExamController extends Controller
 
     public function privacy()
     {
+        // Check if exam was started and time has expired
+        if (session()->has('exam_started')) {
+            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+            if ($remainingTime <= 0) {
+                return redirect()->route('exam.certification');
+            }
+        }
+
         return view('exam.privacy');
     }
     
@@ -99,26 +114,34 @@ class ExamController extends Controller
 
     public function register()
     {
-        $units = Unit::where('IsActive', '=', '1')->get();
+        // Check if exam was started and time has expired
+        if (session()->has('exam_started')) {
+            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+            if ($remainingTime <= 0) {
+                return redirect()->route('exam.certification');
+            }
+        }
+        $units = Unit::where('IsActive', '=', '1')
+                    ->where('isRegionalBased', 1)->get();
+
         return view('exam.register', compact('units'));
     }
     
     public function storeRegistration(Request $request)
     {
-        try {
-            // Validate input
-            $validated = $request->validate([
-                'rank' => 'required|string',
-                'first_name' => 'required|string',
-                'middle_name' => 'nullable|string',
-                'last_name' => 'required|string',
-                'qualifier' => 'nullable|string',
-                'designation' => 'required|string',
-                'unit' => 'required|string',
-                'subunit' => 'required|string',
-                'station' => 'nullable|string',
-            ]);
+         $validated = $request->validate([
+            'rank' => 'required|string',
+            'first_name' => 'required|string',
+            'middle_name' => 'nullable|string',
+            'last_name' => 'required|string',
+            'qualifier' => 'nullable|string',
+            'designation' => 'required|string',
+            'unit' => 'required|string',
+            'subunit' => 'nullable|string',
+            'station' => 'nullable|string',
+        ]);
 
+        try {
             // Ensure token_id exists in session
             if (!session()->has('token_id')) {
                 return back()->with('error', 'Session expired or invalid. Please enter your token again.');
@@ -155,12 +178,24 @@ class ExamController extends Controller
 
     public function instructions()
     {
+        // Check if time has expired
+        if (session()->has('exam_started')) {
+            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+            if ($remainingTime <= 0) {
+                return redirect()->route('exam.certification');
+            }
+        }
+
         return view('exam.instructions');
     }
     
     public function startExam(Request $request)
     {
         try {
+            // Validate that certification was accepted
+            if (!$request->has('certified') || $request->certified !== '1') {
+                return back()->with('error', 'You must certify the statement before starting the exam.');
+            }
             $exam = Exam::first();
 
             if (!$exam) {
@@ -171,7 +206,11 @@ class ExamController extends Controller
 
             $questionLimit = $exam->number_of_questions ?? 30;
 
-            $questions = $exam->questions()->inRandomOrder()->limit($questionLimit)->get();
+            $questions = $exam->questions()
+                    ->where('is_active', 1)
+                    ->inRandomOrder()
+                    ->limit($questionLimit)
+                    ->get();
 
             if ($questions->isEmpty()) {
                 return back()->with('error', 'No questions found for this exam.');
@@ -203,6 +242,12 @@ class ExamController extends Controller
                 return redirect()->route('exam.instructions')->with('error', 'Please start the exam first.');
             }
 
+            // Check if time has expired
+            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+            if ($remainingTime <= 0) {
+                return redirect()->route('exam.certification');
+            }
+
             $question_index = $question_number - 1;
             $questions = session('questions');
 
@@ -220,7 +265,8 @@ class ExamController extends Controller
             $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
 
             if ($remainingTime <= 0) {
-                return redirect()->route('exam.submit')->with('warning', 'Time has expired.');
+                // return redirect()->route('exam.submit')->with('warning', 'Time has expired.');
+                return redirect()->route('exam.certification');
             }
 
             return view('exam.question', [
@@ -274,6 +320,16 @@ class ExamController extends Controller
     public function submitExam(Request $request)
     {
         try {
+            // If this is a GET request (from time expiration), show certification form
+            if ($request->isMethod('get')) {
+                return redirect()->route('exam.certification');
+            }
+
+            // If exam already submitted, redirect to results
+            if (session()->has('exam_score')) {
+                return redirect()->route('exam.results');
+            }
+
             $request->validate([
                 'certify' => 'required|accepted'
             ]);
@@ -286,6 +342,10 @@ class ExamController extends Controller
             if (!$examinee) {
                 return redirect()->route('exam.instructions')->with('error', 'Examinee not found. Please try again.');
             }
+
+            $examinee->update([
+                'accepted_certification' => true
+            ]);
 
             if (!$questions->count()) {
                 // If no questions, still create empty responses and show results
@@ -320,18 +380,54 @@ class ExamController extends Controller
                 'used_at' => now()
             ]);
 
+            // // Calculate proficiency level
+            // $totalQuestions = count($questions);
+            // $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
+
+            // if ($percentage >= 90) {
+            //     $proficiency = 'Expert';
+            // } elseif ($percentage >= 75) {
+            //     $proficiency = 'Proficient';
+            // } elseif ($percentage >= 50) {
+            //     $proficiency = 'Moderate';
+            // } else {
+            //     $proficiency = 'Needs Improvement';
+            // }
+
             // Calculate proficiency level
             $totalQuestions = count($questions);
-            $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
+            $percentage = $totalQuestions > 0 ? round(($score / $totalQuestions) * 100) : 0;
 
-            if ($percentage >= 90) {
-                $proficiency = 'Expert';
-            } elseif ($percentage >= 75) {
-                $proficiency = 'Proficient';
-            } elseif ($percentage >= 50) {
-                $proficiency = 'Moderate';
+            // if ($percentage >= 95) {
+            //     $proficiency = 'Passed (100%)';
+            // } elseif ($percentage >= 90) {
+            //     $proficiency = 'Passed (94%)';
+            // } elseif ($percentage >= 85) {
+            //     $proficiency = 'Passed (89%)';
+            // } elseif ($percentage >= 80) {
+            //     $proficiency = 'Passed (84%)';
+            // } elseif ($percentage >= 76) {
+            //     $proficiency = 'Passed (80%)';
+            // } elseif ($percentage == 75) {
+            //     $proficiency = 'Passed (75%)';
+            // } else {
+            //     $proficiency = 'Failed (' . $percentage . '%)';
+            // }
+
+            if ($percentage >= 95) {
+                $proficiency = 'Passed';
+            } elseif ($percentage >= 90) {
+                $proficiency = 'Passed';
+            } elseif ($percentage >= 85) {
+                $proficiency = 'Passed';
+            } elseif ($percentage >= 80) {
+                $proficiency = 'Passed';
+            } elseif ($percentage >= 76) {
+                $proficiency = 'Passed';
+            } elseif ($percentage == 75) {
+                $proficiency = 'Passed';
             } else {
-                $proficiency = 'Needs Improvement';
+                $proficiency = 'Failed';
             }
 
             // Store results in session
@@ -355,6 +451,21 @@ class ExamController extends Controller
                 preg_replace('/[^a-zA-Z0-9\s]/', '', trim($text))
             )
         );
+    }
+
+    public function showCertification()
+    {
+        if (!session()->has('exam_started')) {
+            return redirect()->route('exam.instructions')->with('error', 'Please start the exam first.');
+        }
+
+        // Check if time has actually expired
+        $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
+        if ($remainingTime > 0) {
+            return redirect()->route('exam.question', ['question_number' => session('current_question', 1)]);
+        }
+
+        return view('exam.certification');
     }
     
     public function showResults()

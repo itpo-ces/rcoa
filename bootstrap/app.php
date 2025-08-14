@@ -16,6 +16,7 @@ use App\Http\Middleware\ExamDateMiddleware;
 use App\Http\Middleware\RegisteredExamineeMiddleware;
 use App\Http\Middleware\StartedExamMiddleware;
 use App\Http\Middleware\ValidTokenMiddleware;
+use App\Http\Middleware\TwoFactorAuth;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -31,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'accepted.privacy' => AcceptedPrivacyMiddleware::class,
             'registered.examinee' => RegisteredExamineeMiddleware::class,
             'started.exam' => StartedExamMiddleware::class,
+            '2fa' => TwoFactorAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('components.app')
 
 @section('content')
 <div class="container">
@@ -47,7 +47,7 @@
                             Follow all ethical standards. Any attempt to cheat or manipulate the system may result in penalties or disqualification.</li>
                     </ol>
 
-                    <form method="POST" action="{{ route('exam.start-exam') }}">
+                    {{-- <form method="POST" action="{{ route('exam.start-exam') }}">
                         @csrf
                         <div class="form-group row mb-0">
                             <div class="col-md-12 text-center">
@@ -56,18 +56,59 @@
                                 </button>
                             </div>
                         </div>
-                    </form>
+                    </form> --}}
+                     <div class="text-center">
+                        <button type="button" class="btn btn-primary" id="start-exam-btn">
+                            Start Exam
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Certification Modal -->
+<div class="modal fade" id="certificationModal" tabindex="-1" role="dialog" aria-labelledby="certificationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="certificationModalLabel">Certification</h5>
+            </div>
+            <div class="modal-body">
+                <p class="text-justify">
+                    I, <strong>{{ session('examinee_full_name') ?? '' }}</strong>, commit myself to take the online test for Radio Communication and will take the same with all honesty and integrity.
+                    I bound myself to be held liable for dishonesty and conduct unbecoming of a police officer if I undertake fraud and misrepresentation in taking the said test.
+                </p>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="certify" name="certified" value="1">
+                    <label class="form-check-label" for="certify">
+                        I certify the above statement
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="start-exam-now-btn">
+                    Start Exam Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for actual submission -->
+<form id="actual-start-exam-form" method="POST" action="{{ route('exam.start-exam') }}" style="display: none;">
+    @csrf
+    <input type="hidden" name="certified" value="1">
+</form>
 @endsection
 
 @section('scripts')
 <script>
     $(document).ready(function() {
-        // Show SweetAlert message if session has success or error
+        // Show SweetAlert for success/error messages
         @if (session('success'))
             Swal.fire({
                 icon: 'success',
@@ -84,17 +125,31 @@
             });
         @endif
 
-        // Attach submit event to the form
-        $('form').on('submit', function(e) {
-            Swal.fire({
-                title: 'Loading Questions...',
-                html: 'Please wait while we load the questions...',
-                allowEscapeKey: false,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading(); // Show the loading spinner
-                }
-            });
+        // Show modal only when Start Exam button is clicked
+        $('#start-exam-btn').on('click', function() {
+            $('#certificationModal').modal('show');
+        });
+
+        // Start Exam Now button click handler
+        $('#start-exam-now-btn').on('click', function() {
+            if ($('#certify').is(':checked')) {
+
+                // Show loading spinner
+                Swal.fire({
+                    title: 'Preparing Exam...',
+                    html: 'Please wait while we load your questions...',
+                    allowEscapeKey: false,
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        setTimeout(() => {
+                            $('#actual-start-exam-form').submit();
+                        }, 500);
+                    }
+                });
+            } else {
+                toastr.error('You must certify the statement before starting the exam.', 'Administrator', {timeOut: 5000, progressBar: true});
+            }
         });
     });
 </script>

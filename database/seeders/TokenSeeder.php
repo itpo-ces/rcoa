@@ -15,7 +15,7 @@ class TokenSeeder extends Seeder
     public function run(): void
     {
         // Generate 1000 unique tokens
-        for ($i = 0; $i < 1000; $i++) {
+        for ($i = 0; $i < 2000; $i++) {
             Token::create([
                 'token' => Str::random(16)
             ]);
