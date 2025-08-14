@@ -189,140 +189,358 @@ class ExamController extends Controller
         return view('exam.instructions');
     }
     
-    // public function startExam(Request $request)
-    // {
-    //     try {
-    //         // Validate that certification was accepted
-    //         if (!$request->has('certified') || $request->certified !== '1') {
-    //             return back()->with('error', 'You must certify the statement before starting the exam.');
-    //         }
-    //         $exam = Exam::first();
+    public function startExam1(Request $request)
+    {
+        try {
+            // Validate that certification was accepted
+            if (!$request->has('certified') || $request->certified !== '1') {
+                return back()->with('error', 'You must certify the statement before starting the exam.');
+            }
+            $exam = Exam::first();
 
-    //         if (!$exam) {
-    //             return back()->with('error', 'Exam is not available. Please contact the administrator.');
-    //         }
+            if (!$exam) {
+                return back()->with('error', 'Exam is not available. Please contact the administrator.');
+            }
 
-    //         // $questions = $exam->questions()->inRandomOrder()->get();
+            // $questions = $exam->questions()->inRandomOrder()->get();
 
-    //         $questionLimit = $exam->number_of_questions ?? 30;
+            $questionLimit = $exam->number_of_questions ?? 30;
 
-    //         $questions = $exam->questions()
-    //                 ->where('is_active', 1)
-    //                 ->inRandomOrder()
-    //                 ->limit($questionLimit)
-    //                 ->get();
+            $questions = $exam->questions()
+                    ->where('is_active', 1)
+                    ->inRandomOrder()
+                    ->limit($questionLimit)
+                    ->get();
 
-    //         if ($questions->isEmpty()) {
-    //             return back()->with('error', 'No questions found for this exam.');
-    //         }
+            if ($questions->isEmpty()) {
+                return back()->with('error', 'No questions found for this exam.');
+            }
 
-    //         // Set session data
-    //         session([
-    //             'exam_started' => true,
-    //             'exam_start_time' => now()->toDateTimeString(),
-    //             'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
-    //             'questions' => $questions->pluck('id')->toArray(),
-    //             'current_question' => 0,
-    //             'answers' => []
-    //         ]);
+            // Set session data
+            session([
+                'exam_started' => true,
+                'exam_start_time' => now()->toDateTimeString(),
+                'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+                'questions' => $questions->pluck('id')->toArray(),
+                'current_question' => 0,
+                'answers' => []
+            ]);
 
-    //         return redirect()->route('exam.question', ['question_number' => 1]);
-    //     } catch (\Exception $e) {
-    //         \Log::error('Start Exam Error: ' . $e->getMessage());
+            return redirect()->route('exam.question', ['question_number' => 1]);
+        } catch (\Exception $e) {
+            \Log::error('Start Exam Error: ' . $e->getMessage());
 
-    //         return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
-    //     }
-    // }
-    
-    
-    public function startExam(Request $request)
-{
-    try {
-        // Validate that certification was accepted
-        if (!$request->has('certified') || $request->certified !== '1') {
-            return back()->with('error', 'You must certify the statement before starting the exam.');
+            return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
         }
-        
-        $exam = Exam::first();
-
-        if (!$exam) {
-            return back()->with('error', 'Exam is not available. Please contact the administrator.');
-        }
-
-        $questionLimit = $exam->number_of_questions ?? 30;
-
-        // Calculate number of questions per difficulty level
-        $easyCount = ceil($questionLimit * 0.40);
-        $moderateCount = ceil($questionLimit * 0.30);
-        $difficultCount = ceil($questionLimit * 0.25);
-        $extraDifficultCount = ceil($questionLimit * 0.05);
-
-        // Adjust counts if they don't add up exactly due to rounding
-        $total = $easyCount + $moderateCount + $difficultCount + $extraDifficultCount;
-        if ($total > $questionLimit) {
-            // Reduce the largest category (usually easy)
-            $easyCount -= ($total - $questionLimit);
-        } elseif ($total < $questionLimit) {
-            // Add to the largest category
-            $easyCount += ($questionLimit - $total);
-        }
-
-        // Get questions for each difficulty level
-        $easyQuestions = $exam->questions()
-            ->where('is_active', 1)
-            ->where('difficulty', 'easy')
-            ->inRandomOrder()
-            ->limit($easyCount)
-            ->get();
-
-        $moderateQuestions = $exam->questions()
-            ->where('is_active', 1)
-            ->where('difficulty', 'moderate')
-            ->inRandomOrder()
-            ->limit($moderateCount)
-            ->get();
-
-        $difficultQuestions = $exam->questions()
-            ->where('is_active', 1)
-            ->where('difficulty', 'difficult')
-            ->inRandomOrder()
-            ->limit($difficultCount)
-            ->get();
-
-        $extraDifficultQuestions = $exam->questions()
-            ->where('is_active', 1)
-            ->where('difficulty', 'extra_difficult')
-            ->inRandomOrder()
-            ->limit($extraDifficultCount)
-            ->get();
-
-        // Combine all questions and shuffle them
-        $questions = $easyQuestions
-            ->concat($moderateQuestions)
-            ->concat($difficultQuestions)
-            ->concat($extraDifficultQuestions)
-            ->shuffle();
-
-        if ($questions->isEmpty()) {
-            return back()->with('error', 'No questions found for this exam.');
-        }
-
-        // Set session data
-        session([
-            'exam_started' => true,
-            'exam_start_time' => now()->toDateTimeString(),
-            'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
-            'questions' => $questions->pluck('id')->toArray(),
-            'current_question' => 0,
-            'answers' => []
-        ]);
-
-        return redirect()->route('exam.question', ['question_number' => 1]);
-    } catch (\Exception $e) {
-        \Log::error('Start Exam Error: ' . $e->getMessage());
-        return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
     }
-}
+    
+    public function startExam2(Request $request)
+    {
+        try {
+            // Validate that certification was accepted
+            if (!$request->has('certified') || $request->certified !== '1') {
+                return back()->with('error', 'You must certify the statement before starting the exam.');
+            }
+            
+            $exam = Exam::first();
+
+            if (!$exam) {
+                return back()->with('error', 'Exam is not available. Please contact the administrator.');
+            }
+
+            $questionLimit = $exam->number_of_questions ?? 30;
+
+            // Calculate number of questions per difficulty level
+            $easyCount = ceil($questionLimit * 0.40);
+            $moderateCount = ceil($questionLimit * 0.30);
+            $difficultCount = ceil($questionLimit * 0.25);
+            $extraDifficultCount = ceil($questionLimit * 0.05);
+
+            // Adjust counts if they don't add up exactly due to rounding
+            $total = $easyCount + $moderateCount + $difficultCount + $extraDifficultCount;
+            if ($total > $questionLimit) {
+                // Reduce the largest category (usually easy)
+                $easyCount -= ($total - $questionLimit);
+            } elseif ($total < $questionLimit) {
+                // Add to the largest category
+                $easyCount += ($questionLimit - $total);
+            }
+
+            // Get questions for each difficulty level
+            $easyQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->where('difficulty', 'easy')
+                ->inRandomOrder()
+                ->limit($easyCount)
+                ->get();
+
+            $moderateQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->where('difficulty', 'moderate')
+                ->inRandomOrder()
+                ->limit($moderateCount)
+                ->get();
+
+            $difficultQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->where('difficulty', 'difficult')
+                ->inRandomOrder()
+                ->limit($difficultCount)
+                ->get();
+
+            $extraDifficultQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->where('difficulty', 'extra_difficult')
+                ->inRandomOrder()
+                ->limit($extraDifficultCount)
+                ->get();
+
+            // Combine all questions and shuffle them
+            $questions = $easyQuestions
+                ->concat($moderateQuestions)
+                ->concat($difficultQuestions)
+                ->concat($extraDifficultQuestions)
+                ->shuffle();
+
+            if ($questions->isEmpty()) {
+                return back()->with('error', 'No questions found for this exam.');
+            }
+
+            // Set session data
+            session([
+                'exam_started' => true,
+                'exam_start_time' => now()->toDateTimeString(),
+                'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+                'questions' => $questions->pluck('id')->toArray(),
+                'current_question' => 0,
+                'answers' => []
+            ]);
+
+            return redirect()->route('exam.question', ['question_number' => 1]);
+        } catch (\Exception $e) {
+            \Log::error('Start Exam Error: ' . $e->getMessage());
+            return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
+        }
+    }
+
+    public function startExam3(Request $request)
+    {
+        try {
+            // Validate certification
+            if (!$request->has('certified') || $request->certified !== '1') {
+                return back()->with('error', 'You must certify the statement before starting the exam.');
+            }
+            
+            $exam = Exam::first();
+
+            if (!$exam) {
+                return back()->with('error', 'Exam is not available. Please contact the administrator.');
+            }
+
+            $questionLimit = $exam->number_of_questions ?? 30;
+
+            // Suggested question type distribution:
+            // multiple_choice = 60%
+            // fill_in_the_blanks = 20%
+            // true_or_false = 15%
+            // yes_or_no = 5%
+            $typeDistribution = [
+                'multiple_choice' => 0.60,
+                'fill_in_the_blanks' => 0.20,
+                'true_or_false' => 0.15,
+                'yes_or_no' => 0.05
+            ];
+
+            // Difficulty distribution
+            $difficultyDistribution = [
+                'easy' => 0.40,
+                'moderate' => 0.30,
+                'difficult' => 0.25,
+                'extra_difficult' => 0.05
+            ];
+
+            // First get all active questions
+            $allQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->get()
+                ->groupBy(['type', 'difficulty']);
+
+            $selectedQuestions = collect();
+
+            foreach ($typeDistribution as $type => $typePercent) {
+                foreach ($difficultyDistribution as $difficulty => $diffPercent) {
+                    // Calculate number of questions for this type/difficulty combination
+                    $count = ceil($questionLimit * $typePercent * $diffPercent);
+
+                    // Get questions of this type and difficulty
+                    $questions = $allQuestions->get($type, collect())
+                        ->get($difficulty, collect())
+                        ->shuffle()
+                        ->take($count);
+
+                    $selectedQuestions = $selectedQuestions->concat($questions);
+                }
+            }
+
+            // If we didn't get enough questions, fill the rest with random ones
+            if ($selectedQuestions->count() < $questionLimit) {
+                $remaining = $questionLimit - $selectedQuestions->count();
+                $additionalQuestions = $exam->questions()
+                    ->where('is_active', 1)
+                    ->whereNotIn('id', $selectedQuestions->pluck('id'))
+                    ->inRandomOrder()
+                    ->limit($remaining)
+                    ->get();
+
+                $selectedQuestions = $selectedQuestions->concat($additionalQuestions);
+            }
+
+            // Shuffle the final collection
+            $questions = $selectedQuestions->shuffle();
+
+            if ($questions->isEmpty()) {
+                return back()->with('error', 'No questions found for this exam.');
+            }
+
+            // Set session data
+            session([
+                'exam_started' => true,
+                'exam_start_time' => now()->toDateTimeString(),
+                'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+                'questions' => $questions->pluck('id')->toArray(),
+                'current_question' => 0,
+                'answers' => []
+            ]);
+
+            return redirect()->route('exam.question', ['question_number' => 1]);
+        } catch (\Exception $e) {
+            \Log::error('Start Exam Error: ' . $e->getMessage());
+            return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
+        }
+    }
+
+    public function startExam(Request $request)
+    {
+        try {
+            // Validate certification
+            if (!$request->has('certified') || $request->certified !== '1') {
+                return back()->with('error', 'You must certify the statement before starting the exam.');
+            }
+            
+            $exam = Exam::first();
+
+            if (!$exam) {
+                return back()->with('error', 'Exam is not available. Please contact the administrator.');
+            }
+
+            $questionLimit = $exam->number_of_questions ?? 30;
+
+            // Question type distribution
+            $typeDistribution = [
+                'multiple_choice' => 0.60,
+                'fill_in_the_blanks' => 0.20,
+                'true_or_false' => 0.15,
+                'yes_or_no' => 0.05
+            ];
+
+            // Difficulty distribution
+            $difficultyDistribution = [
+                'easy' => 0.40,
+                'moderate' => 0.30,
+                'difficult' => 0.25,
+                'extra_difficult' => 0.05
+            ];
+
+            // First get all active questions grouped by type and difficulty
+            $allQuestions = $exam->questions()
+                ->where('is_active', 1)
+                ->get()
+                ->groupBy(['type', 'difficulty']);
+
+            $selectedQuestions = collect();
+            $targetCounts = [];
+
+            // Calculate target counts for each category without rounding
+            foreach ($typeDistribution as $type => $typePercent) {
+                foreach ($difficultyDistribution as $difficulty => $diffPercent) {
+                    $targetCounts[$type][$difficulty] = $questionLimit * $typePercent * $diffPercent;
+                }
+            }
+
+            // First pass - floor all counts
+            foreach ($targetCounts as $type => $difficulties) {
+                foreach ($difficulties as $difficulty => $count) {
+                    $toTake = floor($count);
+                    $questions = $allQuestions->get($type, collect())
+                        ->get($difficulty, collect())
+                        ->shuffle()
+                        ->take($toTake);
+                    $selectedQuestions = $selectedQuestions->concat($questions);
+                }
+            }
+
+            // Calculate remaining questions needed
+            $remaining = $questionLimit - $selectedQuestions->count();
+
+            if ($remaining > 0) {
+                // Second pass - distribute remaining questions proportionally
+                $flattenedTargets = [];
+                foreach ($targetCounts as $type => $difficulties) {
+                    foreach ($difficulties as $difficulty => $count) {
+                        $fraction = $count - floor($count);
+                        $flattenedTargets[] = [
+                            'type' => $type,
+                            'difficulty' => $difficulty,
+                            'fraction' => $fraction
+                        ];
+                    }
+                }
+
+                // Sort by largest fraction first
+                usort($flattenedTargets, function ($a, $b) {
+                    return $b['fraction'] <=> $a['fraction'];
+                });
+
+                // Take one from each category until we reach the limit
+                foreach ($flattenedTargets as $target) {
+                    if ($remaining <= 0) break;
+                    
+                    $questions = $allQuestions->get($target['type'], collect())
+                        ->get($target['difficulty'], collect())
+                        ->shuffle()
+                        ->take(1)
+                        ->diff($selectedQuestions);
+                    
+                    if ($questions->isNotEmpty()) {
+                        $selectedQuestions = $selectedQuestions->concat($questions);
+                        $remaining--;
+                    }
+                }
+            }
+
+            // Final shuffle
+            $questions = $selectedQuestions->shuffle();
+
+            if ($questions->isEmpty()) {
+                return back()->with('error', 'No questions found for this exam.');
+            }
+
+            // Set session data
+            session([
+                'exam_started' => true,
+                'exam_start_time' => now()->toDateTimeString(),
+                'exam_end_time' => now()->addMinutes($exam->duration_minutes)->toDateTimeString(),
+                'questions' => $questions->pluck('id')->toArray(),
+                'current_question' => 0,
+                'answers' => []
+            ]);
+
+            return redirect()->route('exam.question', ['question_number' => 1]);
+        } catch (\Exception $e) {
+            \Log::error('Start Exam Error: ' . $e->getMessage());
+            return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
+        }
+    }
     
     public function showQuestion($question_number)
     {

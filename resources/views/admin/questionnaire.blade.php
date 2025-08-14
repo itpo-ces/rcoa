@@ -176,19 +176,15 @@
                     <table id="questionnaireTable" class="table table-sm table-hover text-center">
                         <thead>
                             <tr>
-                                <thead>
-                                    <tr>
-                                        <th class="hidden">Exam ID</th>
-                                        <th>Exam</th>
-                                        <th>Question</th>
-                                        <th>Type</th>
-                                        <th>Difficulty</th>
-                                        <th>Correct Answer</th>
-                                        <th>Options</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
+                                <th class="hidden">Exam ID</th>
+                                <th>Exam</th>
+                                <th>Question</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Correct Answer</th>
+                                <th>Options</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -688,14 +684,14 @@
                 }
             },
             columns: [
-                { data: 'id', name: 'id', class: 'hidden' },
-                { data: 'exam', name: 'exam' },
-                { data: 'question', name: 'question' },
-                { data: 'type', name: 'type' },
-                { data: 'difficulty', name: 'difficulty' },
-                { data: 'answer', name: 'answer' },
-                { data: 'options', name: 'options' },
-                { data: 'status', name: 'status' },
+                { data: 'id', name: 'id', class: 'hidden', orderable: false, searchable: false  },
+                { data: 'exam', name: 'exam', orderable: false, searchable: false  },
+                { data: 'question', name: 'question', orderable: false, searchable: false  },
+                { data: 'type', name: 'type', orderable: false, searchable: false  },
+                { data: 'difficulty', name: 'difficulty', orderable: false, searchable: false  },
+                { data: 'answer', name: 'answer', orderable: false, searchable: false  },
+                { data: 'options', name: 'options', orderable: false, searchable: false  },
+                { data: 'status', name: 'status', orderable: false, searchable: false  },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']],
@@ -1680,7 +1676,7 @@ $(document).ready(function () {
                         html: htmlContent,
                         showConfirmButton: false,
                         allowOutsideClick: false,
-                        // timer: (totalSkippedInventory.length === 0) ? 2000 : undefined
+                        timer: (totalSkippedInventory.length === 0) ? 2000 : undefined
                     }).then((result) => {
                         if (result.dismiss === Swal.DismissReason.timer && totalSkippedInventory.length === 0) {
                             $("#import_questionnaire_modal").modal("hide");
