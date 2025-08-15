@@ -5,7 +5,7 @@ use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\ExaminationController;
-use App\Http\Controllers\Admin\ResultController;
+use App\Http\Controllers\Admin\ExamResultController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
@@ -95,8 +95,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Route::post('/results/restore', [ResultController::class, 'restore'])->name('results.restore');
     // Route::post('/results/import', [ResultController::class, 'import'])->name('results.import');
 
-    Route::get('/results', [ResultController::class, 'index'])->name('results.index');
-    Route::post('/results/data', [ResultController::class, 'postResultsData'])->name('results.data');
-    Route::get('/results/{id}/export', [ResultController::class, 'exportResult'])->name('results.export');
-    Route::get('/results/{id}', [ResultController::class, 'show'])->name('results.show');
+    Route::get('/results', [ExamResultController::class, 'index'])->name('results.index');
+    Route::post('/results/data', [ExamResultController::class, 'postResultsData'])->name('results.data');
+    // Route::get('/results/{id}/export', [ExamResultController::class, 'exportResult'])->name('results.export');
+    Route::get('/results/{id}', [ExamResultController::class, 'show'])->name('results.show');
+
+    Route::get('/results/{id}/export/{type?}', [ExamResultController::class, 'exportResult'])
+            ->name('results.export')
+            ->where('type', 'excel|pdf');
 });

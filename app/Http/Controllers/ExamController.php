@@ -12,6 +12,7 @@ use App\Models\ExamResponse;
 use App\Models\Unit;
 use App\Models\Subunit;
 use App\Models\Station;
+use App\Models\ExamResult;
 
 class ExamController extends Controller
 {
@@ -688,39 +689,9 @@ class ExamController extends Controller
                 'used_at' => now()
             ]);
 
-            // // Calculate proficiency level
-            // $totalQuestions = count($questions);
-            // $percentage = $totalQuestions > 0 ? ($score / $totalQuestions) * 100 : 0;
-
-            // if ($percentage >= 90) {
-            //     $proficiency = 'Expert';
-            // } elseif ($percentage >= 75) {
-            //     $proficiency = 'Proficient';
-            // } elseif ($percentage >= 50) {
-            //     $proficiency = 'Moderate';
-            // } else {
-            //     $proficiency = 'Needs Improvement';
-            // }
-
             // Calculate proficiency level
             $totalQuestions = count($questions);
             $percentage = $totalQuestions > 0 ? round(($score / $totalQuestions) * 100) : 0;
-
-            // if ($percentage >= 95) {
-            //     $proficiency = 'Passed (100%)';
-            // } elseif ($percentage >= 90) {
-            //     $proficiency = 'Passed (94%)';
-            // } elseif ($percentage >= 85) {
-            //     $proficiency = 'Passed (89%)';
-            // } elseif ($percentage >= 80) {
-            //     $proficiency = 'Passed (84%)';
-            // } elseif ($percentage >= 76) {
-            //     $proficiency = 'Passed (80%)';
-            // } elseif ($percentage == 75) {
-            //     $proficiency = 'Passed (75%)';
-            // } else {
-            //     $proficiency = 'Failed (' . $percentage . '%)';
-            // }
 
             if ($percentage >= 95) {
                 $proficiency = 'Passed';
@@ -737,6 +708,17 @@ class ExamController extends Controller
             } else {
                 $proficiency = 'Failed';
             }
+
+            // Create exam result record
+            ExamResult::create([
+                'examinee_id' => $examinee->id,
+                'exam_id' => $exam->id,
+                'score' => $score,
+                'total_questions' => $totalQuestions,
+                'percentage' => $percentage,
+                'rating' => $proficiency,
+                'status' => 'completed'
+            ]);
 
             // Store results in session
             session([

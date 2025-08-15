@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use App\Models\Result;
 use App\Models\Exam;
 use App\Models\Examinee;
 use App\Models\ExamResponse;

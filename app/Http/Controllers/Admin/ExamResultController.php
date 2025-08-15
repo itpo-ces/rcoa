@@ -1,0 +1,179 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Exports\ExamResultExport;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Exam;
+use App\Models\Examinee;
+use App\Models\ExamResponse;
+use App\Models\Question;
+use App\Models\Unit;
+use App\Models\ExamResult;
+
+class ExamResultController extends Controller
+{
+        public function index()
+    {
+        $exams = Exam::all();
+        $examinees = Examinee::with('responses')->get()->map(function ($examinee) {
+            $examinee->full_name = $examinee->rank . ' ' . $examinee->first_name . ' ' . 
+                                 $examinee->middle_name . ' ' . $examinee->last_name . ' ' . 
+                                 $examinee->qualifier;
+            return $examinee;
+        });
+
+        // Get unique designations and units for filters
+        $designations = Examinee::select('designation')->distinct()->get()->pluck('designation');
+        $units = Unit::whereIn('UnitId', Examinee::distinct()->pluck('unit'))
+                ->pluck('OrderNumberPrefix', 'UnitId');
+
+        return view('admin.results', compact('exams', 'examinees', 'designations', 'units'));
+    }
+
+    public function postResultsData(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'examFilter' => 'nullable|string',
+                'nameFilter' => 'nullable|string',
+                'designationFilter' => 'nullable|string',
+                'unitFilter' => 'nullable|string',
+                'start' => 'integer|min:0',
+                'length' => 'integer|min:1|max:1000',
+                'draw' => 'required|integer',
+                'order' => 'nullable|array',
+                'order.0.column' => 'nullable|integer',
+                'order.0.dir' => 'nullable|in:asc,desc'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $validated = $validator->validated();
+
+            // Base query to get results with related data
+            $query = ExamResult::with([
+                'examinee.unit',
+                'exam'
+            ])->select('exam_results.*');
+
+            // Apply filters
+            if (($validated['examFilter'] ?? 'all') != 'all') {
+                $query->where('exam_id', $validated['examFilter']);
+            }
+
+            if (($validated['nameFilter'] ?? 'all') != 'all') {
+                $query->whereHas('examinee', function($q) use ($validated) {
+                    $q->where('id', $validated['nameFilter']);
+                });
+            }
+
+            if (($validated['designationFilter'] ?? 'all') != 'all') {
+                $query->whereHas('examinee', function($q) use ($validated) {
+                    $q->where('designation', $validated['designationFilter']);
+                });
+            }
+
+            if (($validated['unitFilter'] ?? 'all') != 'all') {
+                $query->whereHas('examinee', function($q) use ($validated) {
+                    $q->where('unit', $validated['unitFilter']);
+                });
+            }
+
+            // Get total count before pagination
+            $totalData = $query->count();
+
+            // Pagination
+            $start = $validated['start'] ?? 0;
+            $length = $validated['length'] ?? 20;
+            
+            if ($length == -1) {
+                $results = $query->skip($start)->get();
+            } else {
+                $results = $query->skip($start)->take($length)->get();
+            }
+
+            // Format data for DataTables
+            $data = $results->map(function ($result, $index) use ($start) {
+                $examinee = $result->examinee;
+
+                // Get the Description of unit
+                $unitDescription = $examinee->unit_description;
+                
+                return [
+                    'number' => $start + $index + 1,
+                    'id' => $result->id,
+                    'exam' => $result->exam->title ?? 'N/A',
+                    'name' => $examinee->full_name,
+                    'designation' => $examinee->designation,
+                    'unit' => $examinee->unit_description,
+                    'total_question' => $result->total_questions,
+                    'score' => $result->score . '/' . $result->total_questions,
+                    'percentage' => $result->percentage . '%',
+                    'rating' => $result->rating,
+                    'action' => $this->getActionButtons($result)
+                ];
+            });
+
+            return response()->json([
+                'draw' => intval($validated['draw']),
+                'recordsTotal' => $totalData,
+                'recordsFiltered' => $totalData,
+                'data' => $data
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in postResultsData: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'An error occurred while processing the request'
+            ], 500);
+        }
+    }
+
+    private function getActionButtons($result)
+    {
+        return '<div class="btn-group btn-group-sm">
+            <a href="' . route('results.export', ['id' => $result->id, 'type' => 'excel']) . '" 
+                class="btn btn-outline-success">
+                <i class="fas fa-file-excel"></i> Excel
+            </a>
+            <a href="' . route('results.export', ['id' => $result->id, 'type' => 'pdf']) . '" 
+                class="btn btn-outline-danger">
+                <i class="fas fa-file-pdf"></i> PDF
+            </a>
+        </div>';
+    }
+
+    public function exportResult($id, $type = 'excel')
+    {
+        try {
+            $result = ExamResult::with(['examinee', 'exam', 'examinee.responses.question'])
+                        ->findOrFail($id);
+
+            $filename = 'Exam_Result_' . str_replace(' ', '_', $result->examinee->full_name) . '_' . now()->format('Ymd_His');
+
+            if ($type === 'pdf') {
+                $pdf = Pdf::loadView('admin.exports.exam-result-pdf', ['result' => $result]);
+                return $pdf->download($filename . '.pdf');
+            }
+
+            // Default to Excel export
+            return Excel::download(
+                new ExamResultExport($result), 
+                $filename . '.xlsx'
+            );
+
+        } catch (\Exception $e) {
+            \Log::error("Export failed for result ID {$id}: " . $e->getMessage());
+            return back()->with('error', 'Failed to generate export. Please try again.');
+        }
+    }
+}

@@ -195,6 +195,7 @@
                                 <th>Unit</th>
                                 <th>Total Questions</th>
                                 <th>Score</th>
+                                <th>Percentage</th>
                                 <th>Rating</th>
                                 <th>Actions</th>
                             </tr>
@@ -352,18 +353,21 @@
                 { data: 'unit', name: 'unit', orderable: false, searchable: false  },
                 { data: 'total_question', name: 'total_question', orderable: false, searchable: false  },
                 { data: 'score', name: 'score', orderable: false, searchable: false  },
+                { data: 'percentage', name: 'percentage', orderable: false, searchable: false  },
                 { data: 'rating', name: 'rating', orderable: false, searchable: false  },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']],
             createdRow: function(row, data, dataIndex) {
                 var rating = data.rating;
-                var $ratingCell = $(row).find('td:eq(7)'); // Rating is the 8th column (0-based index 7)
-                
+                var $ratingCell = $(row).find('td:eq(9)'); // Rating is the 9th column (0-based index 8)
+
                 if (rating.includes('Failed')) {
-                    $ratingCell.css('color', '#dc3545');
+                  $ratingCell.css('color', '#dc3545');
+                  $ratingCell.css('font-weight', 'bold');
                 } else {
-                    $ratingCell.css('color', '#28a745');
+                  $ratingCell.css('color', '#28a745');
+                  $ratingCell.css('font-weight', 'bold');
                 }
             }
        });
