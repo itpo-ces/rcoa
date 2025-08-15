@@ -33,4 +33,16 @@ class Examinee extends Model
     {
         return $this->hasMany(ExamResponse::class);
     }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unit','UnitId');
+    }
+
+    public function getUnitDescriptionAttribute()
+    {
+        $unitId = (int) $this->unit;
+        return Unit::find($unitId)->OrderNumberPrefix ?? 'N/A';
+    }
+
 }

@@ -10,6 +10,9 @@ class Unit extends Model
     use HasFactory;
 
     protected $table = 'ref_units';
+    protected $primaryKey = 'UnitId'; // <-- Add this line
+    public $incrementing = false;     // <-- If UnitId is not auto-increment
+    protected $keyType = 'int';       // <-- Or 'string' if it's not an int
 
     public function subunits(){
         return $this->hasMany(Subunit::class, 'UnitId', 'SubUnitId');

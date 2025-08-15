@@ -705,9 +705,9 @@
         $('#resetFilters').click(function () {
             // Get current filter values
             const currentFilters = {
-                exam: $('#examFilter').val(),
-                difficulty: $('#difficultyFilter').val(),
-                type: $('#typeFilter').val(),
+                exam: $('#examFilter').val('all'),
+                difficulty: $('#difficultyFilter').val('all'),
+                type: $('#typeFilter').val('all'),
             };
 
             // Check if any filter is not at its default value

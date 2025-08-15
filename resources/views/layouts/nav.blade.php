@@ -94,13 +94,23 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link @if(Route::currentRouteName() == 'profile.index') active @endif">
+                <a href="{{ route('profile.index') }}" class="nav-link @if(Route::currentRouteName() == 'profile.index') active @endif">
                   <i class="nav-icon fas fa-user-cog"></i>
                   <p>
                     Profile
                   </p>
                 </a>
             </li>
+
+            <li class="nav-item">
+                <a href="{{ route('examination.index') }}" class="nav-link @if(Route::currentRouteName() == 'examination.index') active @endif">
+                  <i class="nav-icon fas fa-user-graduate"></i>
+                  <p>
+                    Examination
+                  </p>
+                </a>
+            </li>
+
             <li class="nav-item">
                 <a href="{{ route('questionnaire.index') }}" class="nav-link @if(Route::currentRouteName() == 'questionnaire.index') active @endif">
                   <i class="nav-icon fas fa-user-tie"></i>
@@ -109,11 +119,12 @@
                   </p>
                 </a>
             </li>
+            
             <li class="nav-item">
-                <a href="{{ route('exam.index') }}" class="nav-link @if(Route::currentRouteName() == 'exam.index') active @endif">
+                <a href="{{ route('results.index') }}" class="nav-link @if(Route::currentRouteName() == 'results.index') active @endif">
                   <i class="nav-icon fas fa-user-graduate"></i>
                   <p>
-                    Exams
+                    Results
                   </p>
                 </a>
             </li>

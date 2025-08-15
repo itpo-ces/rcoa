@@ -5,6 +5,8 @@ use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\ExaminationController;
+use App\Http\Controllers\Admin\ResultController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -66,17 +68,35 @@ Route::prefix('2fa')->group(function () {
 });
 
 Route::middleware(['auth', '2fa'])->group(function () {
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+
+    // Dashboard Routes
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
     // Questionnaire Routes
     Route::get('/questionnaire', [QuestionnaireController::class, 'index'])->name('questionnaire.index');
-    Route::post('/questionnaire', [QuestionnaireController::class, 'postQuestionnaireData'])->name('questionnaire.data');
+    Route::post('/questionnaire/data', [QuestionnaireController::class, 'postQuestionnaireData'])->name('questionnaire.data');
     Route::post('/questionnaire/store', [QuestionnaireController::class, 'store'])->name('questionnaire.store');
     Route::post('/questionnaire/update', [QuestionnaireController::class, 'update'])->name('questionnaire.update');
     Route::post('/questionnaire/delete', [QuestionnaireController::class, 'delete'])->name('questionnaire.delete');
     Route::post('/questionnaire/restore', [QuestionnaireController::class, 'restore'])->name('questionnaire.restore');
     Route::post('/questionnaire/import', [QuestionnaireController::class, 'import'])->name('questionnaire.import');
     
-    // Exam Routes
-    Route::get('/exam', [ExamController::class, 'index'])->name('exam.index');
+    // Examination Routes
+    Route::get('/examination', [ExaminationController::class, 'index'])->name('examination.index');
+
+    // Results Routes
+    // Route::get('/results', [ResultController::class, 'index'])->name('results.index');
+    // Route::post('/results', [ResultController::class, 'postResultsData'])->name('results.data');
+    // Route::post('/results/store', [ResultController::class, 'store'])->name('results.store');
+    // Route::post('/results/update', [ResultController::class, 'update'])->name('results.update');
+    // Route::post('/results/delete', [ResultController::class, 'delete'])->name('results.delete');
+    // Route::post('/results/restore', [ResultController::class, 'restore'])->name('results.restore');
+    // Route::post('/results/import', [ResultController::class, 'import'])->name('results.import');
+
+    Route::get('/results', [ResultController::class, 'index'])->name('results.index');
+    Route::post('/results/data', [ResultController::class, 'postResultsData'])->name('results.data');
+    Route::get('/results/{id}/export', [ResultController::class, 'exportResult'])->name('results.export');
+    Route::get('/results/{id}', [ResultController::class, 'show'])->name('results.show');
 });
