@@ -188,6 +188,7 @@
                         <thead>
                             <tr>
                                 <th>Examinee ID</th>
+                                <th>#</th>
                                 <th>Examination</th>
                                 <th>Name</th>
                                 <th>Designation</th>
@@ -337,6 +338,14 @@
             },
             columns: [
                 { data: 'id', name: 'id', class: 'hidden', orderable: false, searchable: false  },
+                { 
+                    data: 'number', 
+                    name: 'number', 
+                    orderable: false, 
+                    searchable: false,
+                    title: '#',
+                    className: 'text-center'
+                },
                 { data: 'exam', name: 'exam', orderable: false, searchable: false  },
                 { data: 'name', name: 'name', orderable: false, searchable: false  },
                 { data: 'designation', name: 'designation', orderable: false, searchable: false  },

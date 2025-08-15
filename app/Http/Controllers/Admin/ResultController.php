@@ -98,7 +98,7 @@ class ResultController extends Controller
             }
 
             // Format data for DataTables
-            $data = $examinees->map(function ($examinee) {
+            $data = $examinees->map(function ($examinee, $index) use ($start) {
                 $totalQuestions = $examinee->total_questions ?? 0;
                 $score = $examinee->score ?? 0;
                 $percentage = $totalQuestions > 0 ? round(($score / $totalQuestions) * 100) : 0;
@@ -128,6 +128,7 @@ class ResultController extends Controller
 
                 return [
                     'id' => $examinee->id,
+                    'number' => $start + $index + 1,
                     'exam' => $examTitle,
                     'name' => $examinee->full_name,
                     'designation' => $examinee->designation,
