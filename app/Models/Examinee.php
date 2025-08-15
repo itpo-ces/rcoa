@@ -21,7 +21,7 @@ class Examinee extends Model
 
     public function getFullNameAttribute()
     {
-        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+        return strtoupper(trim("{$this->rank} {$this->first_name} {$this->middle_name} {$this->last_name}"));
     }
     
     public function token()
