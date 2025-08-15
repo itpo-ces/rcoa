@@ -30,12 +30,14 @@ class ExamResultExport implements FromCollection, WithHeadings, WithStyles
             ['Percentage', $this->result->percentage . '%'],
             ['Rating', $this->result->rating],
             ['', ''],
-            ['Question', 'Response', 'Correct Answer', 'Result']
+            ['#', 'Question', 'Response', 'Correct Answer', 'Result']  // Added # column
         ];
 
+        $questionNumber = 1;
         foreach ($this->result->examinee->responses as $response) {
             $result = $response->is_correct ? 'Correct' : 'Incorrect';
             $data[] = [
+                $questionNumber++,  // Add and increment question number
                 $response->question->question_text,
                 $response->response,
                 $response->question->correct_answer,
@@ -54,9 +56,14 @@ class ExamResultExport implements FromCollection, WithHeadings, WithStyles
     public function styles(Worksheet $sheet)
     {
         return [
-            1 => ['font' => ['bold' => true]],
-            2 => ['font' => ['bold' => true]],
-            10 => ['font' => ['bold' => true]],
+            1 => ['font' => ['bold' => true]],  // Examinee ID row
+            2 => ['font' => ['bold' => true]],  // Name row
+            10 => ['font' => ['bold' => true]], // Questions header row
+            'A11:A' . (10 + $this->result->examinee->responses->count()) => [  // Style for question numbers
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                ]
+            ]
         ];
     }
 }

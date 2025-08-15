@@ -87,17 +87,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/examination', [ExaminationController::class, 'index'])->name('examination.index');
 
     // Results Routes
-    // Route::get('/results', [ResultController::class, 'index'])->name('results.index');
-    // Route::post('/results', [ResultController::class, 'postResultsData'])->name('results.data');
-    // Route::post('/results/store', [ResultController::class, 'store'])->name('results.store');
-    // Route::post('/results/update', [ResultController::class, 'update'])->name('results.update');
-    // Route::post('/results/delete', [ResultController::class, 'delete'])->name('results.delete');
-    // Route::post('/results/restore', [ResultController::class, 'restore'])->name('results.restore');
-    // Route::post('/results/import', [ResultController::class, 'import'])->name('results.import');
-
     Route::get('/results', [ExamResultController::class, 'index'])->name('results.index');
     Route::post('/results/data', [ExamResultController::class, 'postResultsData'])->name('results.data');
-    // Route::get('/results/{id}/export', [ExamResultController::class, 'exportResult'])->name('results.export');
     Route::get('/results/{id}', [ExamResultController::class, 'show'])->name('results.show');
 
     Route::get('/results/{id}/export/{type?}', [ExamResultController::class, 'exportResult'])

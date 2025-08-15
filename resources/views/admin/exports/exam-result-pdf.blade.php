@@ -14,6 +14,7 @@
         .questions-table th { background-color: #2c3e50; color: white; }
         .correct { color: green; }
         .incorrect { color: red; }
+        .question-number { text-align: center; width: 30px; }
     </style>
 </head>
 <body>
@@ -65,6 +66,7 @@
     <table class="questions-table">
         <thead>
             <tr>
+                <th class="question-number">#</th>
                 <th>Question</th>
                 <th>Response</th>
                 <th>Correct Answer</th>
@@ -72,8 +74,9 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($result->examinee->responses as $response)
+            @foreach($result->examinee->responses as $index => $response)
             <tr>
+                <td class="question-number">{{ $index + 1 }}</td>
                 <td>{{ $response->question->question_text }}</td>
                 <td>{{ $response->response }}</td>
                 <td>{{ $response->question->correct_answer }}</td>
