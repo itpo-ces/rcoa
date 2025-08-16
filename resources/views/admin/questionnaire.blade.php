@@ -61,6 +61,10 @@
         color: #dc3545;
         margin-left: 4px;
     }
+
+    #questionnaireTable td {
+        vertical-align: middle;
+    }
 </style>
 @endsection
 
@@ -215,14 +219,15 @@
                             <div class="alert custom-alert" style="background-color: #e7f4ff; color: #004085; border-left: 4px solid #007bff; padding: 12px 15px;">
                                 <small>
                                     <strong class="alert-heading" style="font-weight: 600; color: #004085;"><i class="fas fa-info-circle mr-2"></i>Before Saving:</strong>
-                                    <span style="color: #004085;">Please review all entries before submitting. The following information will directly affect inventory records, issuance logs, and future audits:</span>
+                                    <span style="color: #004085;">Please carefully review all entries before submitting. The following information will be used in exams and assessments:</span>
                                     <ul class="mb-0 pl-3" style="color: #004085;">
-                                        <li>Ensure the <strong>Serial Number</strong> is correct and unique</li>
-                                        <li>If applicable, specify the correct quantity of <strong>Magazines</strong> and <strong>Rounds</strong></li>
-                                        <li>Select the appropriate <strong>Repository</strong> and <strong>Status</strong> of the item</li>
-                                        <li>Indicate the correct <strong>Primary User</strong> and their corresponding <strong>Unit</strong></li>
-                                        <li>Choose the proper <strong>Category</strong>, <strong>Type</strong>, <strong>Model</strong>, and <strong>Caliber</strong></li>
-                                        <li>Incomplete or inaccurate information may affect system tracking and reports</li>
+                                        <li>Select the correct <strong>Exam</strong> this question belongs to</li>
+                                        <li>Choose the appropriate <strong>Question Type</strong> (Multiple Choice, Fill in the Blanks, etc.)</li>
+                                        <li>Set the proper <strong>Difficulty Level</strong> for the question</li>
+                                        <li>Ensure the <strong>Question Text</strong> is clear and free of errors</li>
+                                        <li>Provide a complete and accurate <strong>Correct Answer</strong></li>
+                                        <li>For multiple choice questions, include all possible <strong>Options</strong> in JSON format</li>
+                                        <li>Incomplete or inaccurate questions may affect exam quality and scoring</li>
                                     </ul>
                                 </small>
                             </div>

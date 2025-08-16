@@ -20,6 +20,11 @@ class Question extends Model
         return $this->belongsTo(Exam::class);
     }
 
+    public function responses()
+    {
+        return $this->hasMany(ExamResponse::class);
+    }
+
     public static function getTypeValues(): array
     {
         return ['multiple_choice', 'fill_in_the_blanks', 'true_or_false', 'yes_or_no'];

@@ -60,7 +60,7 @@
         margin-left: 4px;
     }
 
-    #resultsTable td {
+    #tokenTable td {
         vertical-align: middle;
     }
 </style>
@@ -72,12 +72,12 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Results</h1>
+            <h1>Token Management</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Home</a></li>
-              <li class="breadcrumb-item active">Results</li>
+              <li class="breadcrumb-item active">Token Management</li>
             </ol>
           </div>
         </div>
@@ -108,21 +108,19 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="examFilter">Exam</label>
-                                <select class="form-control select2bs4" name="examFilter" id="examFilter" style="width: 100%;">
+                                <label for="tokenFilter">Token</label>
+                                <select class="form-control select2bs4" name="tokenFilter" id="tokenFilter" style="width: 100%;">
                                     <option value="all">All</option>
-                                    @foreach($exams as $exam)
-                                        <option value="{{ $exam->id }}">{{ $exam->title }}</option>
+                                    @foreach($tokens as $token)
+                                        <option value="{{ $token->id }}">{{ $token->token }}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="nameFilter">Name</label>
-                                <select class="form-control select2bs4" name="nameFilter" id="nameFilter" style="width: 100%;">
+                                <label for="examineeFilter">Examinee</label>
+                                <select class="form-control select2bs4" name="examineeFilter" id="examineeFilter" style="width: 100%;">
                                     <option value="all">All</option>
                                     @foreach($examinees as $examinee)
                                         <option value="{{ $examinee->id }}">{{ $examinee->full_name }}</option>
@@ -130,40 +128,25 @@
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label for="designationFilter">Designation</label>
-                            <select class="form-control select2bs4" name="designationFilter" id="designationFilter" style="width: 100%;">
-                                <option value="all">All</option>
-                                @foreach($designations as $designation)
-                                    <option value="{{ $designation }}">{{ $designation }}</option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="statusFilter">Status</label>
+                                <select class="form-control select2bs4" name="statusFilter" id="statusFilter" style="width: 100%;">
+                                    <option value="all">All</option>
+                                    @foreach($statuses as $status)
+                                        <option value="{{ $status['id'] }}">{{ $status['description'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
-                  </div>
-                  <div class="row">
-                      <div class="col-md-12">
-                          <div class="form-group">
-                              <label for="unitFilter">Unit</label>
-                              <select class="form-control select2bs4" name="unitFilter" id="unitFilter" style="width: 100%;">
-                                  <option value="all">All</option>
-                                  @foreach($units as $unitId => $unitName)
-                                      <option value="{{ $unitId }}">{{ $unitName }}</option>
-                                  @endforeach
-                              </select>
-                          </div>
-                      </div>
-                  </div>
                 </div>
             </div>
         </div>
         <div class="col-md-10">    
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Results List</h3>
+                    <h3 class="card-title">Token List</h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
                             <i class="fas fa-minus"></i>
@@ -175,32 +158,23 @@
                                 <i class="fas fa-cog mr-2"></i> Options
                             </button>
                             <div class="dropdown-menu" aria-labelledby="actionsDropdown">
-                                <!-- Import Questionnaire -->
-                                <a class="dropdown-item text-info" href="#" data-toggle="modal" data-target="#import_questionnaire_modal">
-                                    <i class="fas fa-file-import mr-2"></i> Import Questionnaire
-                                </a>
-                                <!-- Add Item -->
-                                <a class="dropdown-item text-success" href="#" data-toggle="modal" data-target="#add_item_modal">
-                                    <i class="fas fa-plus mr-2"></i> Add Item
+                                <!-- Generate Token -->
+                                <a class="dropdown-item text-success" href="#" data-toggle="modal" data-target="#generate_token_modal">
+                                    <i class="fas fa-plus mr-2"></i> Generate Token
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
-                    <table id="resultsTable" class="table table-sm table-hover text-center">
+                    <table id="tokenTable" class="table table-sm table-hover text-center">
                         <thead>
                             <tr>
-                                <th>Examinee ID</th>
+                                <th>Token ID</th>
                                 <th>#</th>
-                                <th>Examination</th>
-                                <th>Name</th>
-                                <th>Designation</th>
-                                <th>Unit</th>
-                                <th>Total Questions</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Rating</th>
+                                <th>Token</th>
+                                <th>Status</th>
+                                <th>Examinee</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -265,17 +239,17 @@
 <script>
     // Use Ajax to fetch data from the server based on filter options
     $(document).ready(function() {
-       var table = $('#resultsTable').DataTable({
+       var table = $('#tokenTable').DataTable({
         dom: '<"d-flex justify-content-between"lBf>t<"d-flex justify-content-between"ip>',
         buttons: [
             { 
                 extend: 'excel', 
-                title: 'Results List',
+                title: 'Token List',
                 className: 'btn-default'
             },
             { 
                 extend: 'print', 
-                title: 'Results List',
+                title: 'Token List',
                 className: 'btn-default'
             }
         ],
@@ -289,17 +263,16 @@
         lengthMenu: [[20, 50, 100, 500, 1000], [20, 50, 100, 500, 1000]],
 
             ajax: {
-                url: "{{ route('results.data') }}",
+                url: "{{ route('tokens.data') }}",
                 type: "POST",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 data: function (d) {
                     d._token = "{{ csrf_token() }}";
-                    d.examFilter = $('#examFilter').val();
-                    d.nameFilter = $('#nameFilter').val();
-                    d.designationFilter = $('#designationFilter').val();
-                    d.unitFilter = $('#unitFilter').val();
+                    d.tokenFilter = $('#tokenFilter').val();
+                    d.examineeFilter = $('#examineeFilter').val();
+                    d.statusFilter = $('#statusFilter').val();
                     // Convert -1 to a very large number for server-side processing
                         if (d.length === -1) {
                             d.length = 1000000; // Or whatever maximum you want to support
@@ -343,41 +316,32 @@
             },
             columns: [
                 { data: 'id', name: 'id', class: 'hidden', orderable: false, searchable: false  },
-                { 
-                    data: 'number', 
-                    name: 'number', 
-                    orderable: false, 
-                    searchable: false,
-                    title: '#',
-                    className: 'text-center'
-                },
-                { data: 'exam', name: 'exam', orderable: false, searchable: false  },
-                { data: 'name', name: 'name', orderable: false, searchable: false  },
-                { data: 'designation', name: 'designation', orderable: false, searchable: false  },
-                { data: 'unit', name: 'unit', orderable: false, searchable: false  },
-                { data: 'total_question', name: 'total_question', orderable: false, searchable: false  },
-                { data: 'score', name: 'score', orderable: false, searchable: false  },
-                { data: 'percentage', name: 'percentage', orderable: false, searchable: false  },
-                { data: 'rating', name: 'rating', orderable: false, searchable: false  },
+                { data: 'number', name: 'number', orderable: false, searchable: false, title: '#', className: 'text-center'},
+                { data: 'token', name: 'token', orderable: false, searchable: false  },
+                { data: 'status', name: 'status', orderable: false, searchable: false  },
+                { data: 'examinee', name: 'examinee', orderable: false, searchable: false  },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
-            order: [[0, 'desc']],
+            order: [[0, 'asc']],
             createdRow: function(row, data, dataIndex) {
-                var rating = data.rating;
-                var $ratingCell = $(row).find('td:eq(9)'); // Rating is the 9th column (0-based index 8)
+                var status = data.status ? String(data.status) : '';
+                var $statusCell = $(row).find('td:eq(3)'); // status is the 4th column (0-based index 3)
 
-                if (rating.includes('Failed')) {
-                  $ratingCell.css('color', '#dc3545');
-                  $ratingCell.css('font-weight', 'bold');
-                } else {
-                  $ratingCell.css('color', '#28a745');
-                  $ratingCell.css('font-weight', 'bold');
+                if (status.includes('In Use')) {
+                  $statusCell.css('color', '#dc3545');
+                  $statusCell.css('font-weight', 'bold');
+                } else if (status.includes('Available')) {
+                  $statusCell.css('color', '#28a745');
+                  $statusCell.css('font-weight', 'bold');
+                } else if (status.includes('Used')) {
+                  $statusCell.css('color', '#6c757d');
+                  $statusCell.css('font-weight', 'bold');
                 }
             }
        });
 
         // Filter event handlers
-        $('#examFilter, #nameFilter, #designationFilter, #unitFilter').on('change keyup', function() {
+        $('#tokenFilter, #examineeFilter, #statusFilter').on('change keyup', function() {
             table.ajax.reload();
         });
 
@@ -385,24 +349,88 @@
         $('#resetFilters').click(function () {
             // Get current filter values
             const currentFilters = {
-                exam: $('#examFilter').val('all'),
-                name: $('#nameFilter').val('all'),
-                designation: $('#designationFilter').val('all'),
-                unit: $('#unitFilter').val('all'),
+                token: $('#tokenFilter').val('all'),
+                examinee: $('#examineeFilter').val('all'),
+                status: $('#statusFilter').val('all')
             };
 
             // Check if any filter is not at its default value
-            const needsReset = currentFilters.exam !== '' || currentFilters.name !== '' || currentFilters.designation !== '' || currentFilters.unit !== '';
+            const needsReset = currentFilters.token !== '' || currentFilters.examinee !== '' || currentFilters.status !== '';
 
             // Only reset if needed
             if (needsReset) {
                 // Clear input fields
-                $('#examFilter').val('all').trigger('change');
-                $('#nameFilter').val('all').trigger('change');
-                $('#designationFilter').val('all').trigger('change');
-                $('#unitFilter').val('all').trigger('change');
+                $('#tokenFilter').val('all').trigger('change');
+                $('#examineeFilter').val('all').trigger('change');
+                $('#statusFilter').val('all').trigger('change');
                 // Reload DataTable
-                $('#resultsTable').DataTable().ajax.reload();
+                $('#tokenTable').DataTable().ajax.reload();
+            }
+        });
+    });
+</script>
+<script>
+    // QR Code Modal
+    $(document).on('click', '.qr-btn', function(e) {
+        e.preventDefault();
+        const tokenId = $(this).data('token-id');
+        const token = $(this).data('token');
+        const qrCodeUrl = $(this).attr('href');
+        
+        Swal.fire({
+            title: 'Token QR Code',
+            html: `<div class="text-center">
+                    <img src="${qrCodeUrl}" class="img-fluid mb-3" alt="QR Code" 
+                        onerror="this.onerror=null;this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';">
+                    <p class="text-monospace">${token}</p>
+                </div>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            width: 600,
+            height: 600,
+            didOpen: () => {
+                // Force refresh the image if it fails to load
+                const img = Swal.getHtmlContainer().querySelector('img');
+                img.onerror = function() {
+                    this.src = qrCodeUrl + '&t=' + new Date().getTime();
+                };
+            }
+        });
+    });
+
+    // Delete Token
+    $(document).on('click', '.delete-btn', function() {
+        const tokenId = $(this).data('token-id');
+        
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('tokens.delete') }}",
+                    method: 'POST',
+                    data: {
+                        ids: [tokenId],
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            $('#tokenTable').DataTable().ajax.reload();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error('An error occurred while deleting the token');
+                    }
+                });
             }
         });
     });

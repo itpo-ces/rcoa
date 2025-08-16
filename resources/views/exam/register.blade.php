@@ -13,7 +13,7 @@
 
                         <!-- Rank -->
                         <div class="form-group row">
-                            <label for="rank" class="col-md-4 col-form-label text-md-right">Rank</label>
+                            <label for="rank" class="col-md-4 col-form-label text-md-right">Rank<span class="text-danger">*</span></label>
                             <div class="col-md-6">
                                 <select id="rank" class="form-control select2 @error('rank') is-invalid @enderror" style="width: 100%;" name="rank" required>
                                     <option value="" selected disabled>Select Rank</option>
@@ -45,7 +45,7 @@
 
                         <!-- First Name -->
                         <div class="form-group row">
-                            <label for="first_name" class="col-md-4 col-form-label text-md-right">First Name</label>
+                            <label for="first_name" class="col-md-4 col-form-label text-md-right">First Name<span class="text-danger">*</span></label>
                             <div class="col-md-6">
                                 <input id="first_name" type="text" class="form-control @error('first_name') is-invalid @enderror" name="first_name" value="{{ old('first_name')}}" required>
                                 @error('first_name')
@@ -71,7 +71,7 @@
 
                         <!-- Last Name -->
                         <div class="form-group row">
-                            <label for="last_name" class="col-md-4 col-form-label text-md-right">Last Name</label>
+                            <label for="last_name" class="col-md-4 col-form-label text-md-right">Last Name<span class="text-danger">*</span></label>
                             <div class="col-md-6">
                                 <input id="last_name" type="text" class="form-control @error('last_name') is-invalid @enderror" name="last_name" value="{{ old('last_name')}}" required>
                                 @error('last_name')
@@ -97,9 +97,9 @@
 
                         <!-- Designation -->
                         <div class="form-group row">
-                            <label for="designation" class="col-md-4 col-form-label text-md-right">Designation</label>
+                            <label for="designation" class="col-md-4 col-form-label text-md-right">Designation<span class="text-danger">*</span></label>
                             <div class="col-md-6">
-                                <select id="designation" class="form-control @error('designation') is-invalid @enderror" style="width: 100%;" name="designation" required>
+                                <select id="designation" class="form-control select2 @error('designation') is-invalid @enderror" style="width: 100%;" name="designation" required>
                                     <option value="" disabled selected>Select Designation</option>
                                     <option value="Regional Director" @if(old('designation') == 'Regional Director') @endif>Regional Director</option>
                                     <option value="District Director" @if(old('designation') == 'District Director') @endif>District Director</option>
@@ -108,6 +108,7 @@
                                     <option value="Station Commander" @if(old('designation') == 'Station Commander') @endif>Station Commander</option>
                                     <option value="Battalion Commander" @if(old('designation') == 'Battalion Commander') @endif>Battalion Commander</option>
                                     <option value="Force Commander" @if(old('designation') == 'Force Commander') @endif>Force Commander</option>
+                                    <option value="Others" @if(old('designation') == 'Others') @endif>Others</option>
                                 </select>
                                 @error('designation')
                                     <span class="invalid-feedback" role="alert">
@@ -117,9 +118,22 @@
                             </div>
                         </div>
 
+                        <!-- Manual Designation Input (hidden by default) -->
+                        <div class="form-group row" id="manual-designation-group" style="display:none;">
+                            <label for="manual_designation" class="col-md-4 col-form-label text-md-right">Specify Designation<span class="text-danger">*</span></label>
+                            <div class="col-md-6">
+                                <input id="manual_designation" type="text" class="form-control @error('manual_designation') is-invalid @enderror" name="manual_designation" value="{{ old('manual_designation') }}">
+                                @error('manual_designation')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
                         <!-- Unit -->
                         <div class="form-group row" id="unit-group" style="display:none;">
-                            <label for="unit" class="col-md-4 col-form-label text-md-right">Unit</label>
+                            <label for="unit" class="col-md-4 col-form-label text-md-right">Unit<span class="text-danger">*</span></label>
                             <div class="col-md-6">
                                 <select id="unit" class="form-control select2 @error('unit') is-invalid @enderror" style="width: 100%;" name="unit" required>
                                     <option value="" selected disabled>Select Unit</option>
@@ -139,7 +153,7 @@
                         <div class="form-group row" id="subunit-group" style="display:none;">
                             <label for="subunit" class="col-md-4 col-form-label text-md-right">Subunit</label>
                             <div class="col-md-6">
-                                <select id="subunit" class="form-control select2 @error('subunit') is-invalid @enderror" style="width: 100%;" name="subunit" required>
+                                <select id="subunit" class="form-control select2 @error('subunit') is-invalid @enderror" style="width: 100%;" name="subunit">
                                     <option value="" selected>Select Subunit</option>
                                 </select>
                                 @error('subunit')
@@ -215,6 +229,210 @@
     });
 </script>
 <script>
+    $(document).ready(function () {
+    // Initialize Select2 first
+    $('.select2').select2({
+        theme: 'bootstrap4'
+    });
+
+    const designationSelect = $('#designation');
+    const unitGroup = $('#unit-group');
+    const subunitGroup = $('#subunit-group');
+    const stationGroup = $('#station-group');
+
+    // const designationMap = {
+    //     "Regional Director": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: false, required: false },
+    //         station: { show: false, required: false }
+    //     },
+    //     "District Director": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: false, required: false }
+    //     },
+    //     "Provincial Director": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: false, required: false }
+    //     },
+    //     "City Director": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: false, required: false }
+    //     },
+    //     "Station Commander": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: true, required: true }
+    //     },
+    //     "Battalion Commander": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: true, required: true }
+    //     },
+    //     "Force Commander": { 
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: true, required: true }
+    //     },
+    //     "Others": {
+    //         unit: { show: true, required: true },
+    //         subunit: { show: true, required: true },
+    //         station: { show: true, required: true }
+    //     }
+    // };
+
+    // function toggleFields() {
+    //     const selected = designationSelect.val();
+    //     const unitSelect = $('#unit');
+    //     const subunitSelect = $('#subunit');
+    //     const stationSelect = $('#station');
+
+    //     if (designationMap[selected]) {
+    //         // Unit handling
+    //         unitGroup.toggle(designationMap[selected].unit.show);
+    //         unitSelect.prop('required', designationMap[selected].unit.required);
+            
+    //         // Subunit handling
+    //         subunitGroup.toggle(designationMap[selected].subunit.show);
+    //         subunitSelect.prop('required', designationMap[selected].subunit.required);
+            
+    //         // Station handling
+    //         stationGroup.toggle(designationMap[selected].station.show);
+    //         stationSelect.prop('required', designationMap[selected].station.required);
+    //     } else {
+    //         unitGroup.hide();
+    //         subunitGroup.hide();
+    //         stationGroup.hide();
+            
+    //         unitSelect.prop('required', false);
+    //         subunitSelect.prop('required', false);
+    //         stationSelect.prop('required', false);
+    //     }
+    // }
+
+    const designationMap = {
+        "Regional Director": { 
+            unit: { show: true, required: true },
+            subunit: { show: false, required: false },
+            station: { show: false, required: false },
+            manual: { show: false, required: false }
+        },
+        "District Director": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: false, required: false },
+            manual: { show: false, required: false }
+        },
+        "Provincial Director": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: false, required: false },
+            manual: { show: false, required: false }
+        },
+        "City Director": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: false, required: false },
+            manual: { show: false, required: false }
+        },
+        "Station Commander": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: true, required: true },
+            manual: { show: false, required: false }
+        },
+        "Battalion Commander": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: true, required: true },
+            manual: { show: false, required: false }
+        },
+        "Force Commander": { 
+            unit: { show: true, required: true },
+            subunit: { show: true, required: true },
+            station: { show: true, required: true },
+            manual: { show: false, required: false }
+        },
+        "Others": {
+            unit: { show: true, required: true },
+            subunit: { show: true, required: false },  // Optional
+            station: { show: true, required: false }, // Optional
+            manual: { show: true, required: true }    // Required
+        }
+    };
+
+    function toggleFields() {
+        const selected = designationSelect.val();
+        const mapping = designationMap[selected] || {};
+        
+        // Unit handling
+        unitGroup.toggle(mapping.unit?.show || false);
+        $('#unit').prop('required', mapping.unit?.required || false);
+        
+        // Subunit handling
+        subunitGroup.toggle(mapping.subunit?.show || false);
+        $('#subunit').prop('required', mapping.subunit?.required || false);
+        
+        // Station handling
+        stationGroup.toggle(mapping.station?.show || false);
+        $('#station').prop('required', mapping.station?.required || false);
+        
+        // Manual designation handling
+        $('#manual-designation-group').toggle(mapping.manual?.show || false);
+        $('#manual_designation').prop('required', mapping.manual?.required || false);
+    }
+
+    // Use jQuery's change event for Select2
+    designationSelect.on('change', toggleFields);
+
+    // Initialize fields on page load
+    toggleFields();
+
+    // Unit/Subunit/Station chain handling
+    $('#unit').on('change', function() {
+        var selectedUnitId = $(this).val();
+        var subunitSelect = $('#subunit');
+        var stationSelect = $('#station');
+
+        subunitSelect.empty().append($('<option>', { value: '', text: 'Select Subunit', selected: true }));
+        stationSelect.empty().append($('<option>', { value: '', text: 'Select Station', selected: true }));
+
+        if (selectedUnitId) {
+            $.get('{{ route("getPersonnelSubunits") }}', { unitId: selectedUnitId }, function (data) {
+                data.forEach(function (subunit) {
+                    subunitSelect.append($('<option>', {
+                        value: subunit.SubUnitId,
+                        text: subunit.Description
+                    }));
+                });
+                subunitSelect.trigger('change'); // Refresh Select2
+            });
+        }
+    });
+
+    $('#subunit').on('change', function() {
+        var selectedSubunitId = $(this).val();
+        var stationSelect = $('#station');
+
+        stationSelect.empty().append($('<option>', { value: '', text: 'Select Station', selected: true }));
+
+        if (selectedSubunitId) {
+            $.get('{{ route("getPersonnelStations") }}', { subunitId: selectedSubunitId }, function (data) {
+                data.forEach(function (station) {
+                    stationSelect.append($('<option>', {
+                        value: station.StationId,
+                        text: station.Name
+                    }));
+                });
+                stationSelect.trigger('change'); // Refresh Select2
+            });
+        }
+    });
+});
+</script>
+{{-- <script>
 document.addEventListener('DOMContentLoaded', function () {
     const designationSelect = document.getElementById('designation');
     const unitGroup = document.getElementById('unit-group');
@@ -347,5 +565,5 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-</script>
+</script> --}}
 @endsection

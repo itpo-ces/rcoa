@@ -57,7 +57,13 @@ class ExamResultController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            // Get the validated data
             $validated = $validator->validated();
+
+            // Set memory limit and timeout for large queries
+            ini_set('memory_limit', '512M');
+            DB::statement('SET SESSION wait_timeout=120');
+            set_time_limit(120);
 
             // Base query to get results with related data
             $query = ExamResult::with([
@@ -116,7 +122,7 @@ class ExamResultController extends Controller
                     'designation' => $examinee->designation,
                     'unit' => $examinee->unit_description,
                     'total_question' => $result->total_questions,
-                    'score' => $result->score . '/' . $result->total_questions,
+                    'score' => $result->score,
                     'percentage' => $result->percentage . '%',
                     'rating' => $result->rating,
                     'action' => $this->getActionButtons($result)

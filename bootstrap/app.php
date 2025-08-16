@@ -17,6 +17,8 @@ use App\Http\Middleware\RegisteredExamineeMiddleware;
 use App\Http\Middleware\StartedExamMiddleware;
 use App\Http\Middleware\ValidTokenMiddleware;
 use App\Http\Middleware\TwoFactorAuth;
+use App\Http\Middleware\CheckAbandonedExam;
+
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -33,6 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'registered.examinee' => RegisteredExamineeMiddleware::class,
             'started.exam' => StartedExamMiddleware::class,
             '2fa' => TwoFactorAuth::class,
+            'check.abandoned.exam' => CheckAbandonedExam::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

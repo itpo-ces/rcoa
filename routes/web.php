@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\ExaminationController;
 use App\Http\Controllers\Admin\ExamResultController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\AnalysisController;
+use App\Http\Controllers\Admin\TokenController;
 use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -16,9 +18,10 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::middleware(['exam.date'])->group(function () {
+Route::middleware(['exam.date', 'check.abandoned.exam'])->group(function () {
     Route::get('/exam/start', [ExamController::class, 'start'])->name('exam.start');
     Route::post('/exam/validate-token', [ExamController::class, 'validateToken'])->name('exam.validate-token');
+    Route::get('/token/status/{tokenId}', [ExamController::class, 'checkTokenStatus']);
     
     Route::middleware(['valid.token'])->group(function () {
         Route::get('/exam/privacy', [ExamController::class, 'privacy'])->name('exam.privacy');
@@ -48,6 +51,7 @@ Route::middleware(['exam.date'])->group(function () {
             });
         });
     });
+
 });
 
 /*=============================
@@ -82,9 +86,15 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('/questionnaire/delete', [QuestionnaireController::class, 'delete'])->name('questionnaire.delete');
     Route::post('/questionnaire/restore', [QuestionnaireController::class, 'restore'])->name('questionnaire.restore');
     Route::post('/questionnaire/import', [QuestionnaireController::class, 'import'])->name('questionnaire.import');
-    
+
+    // Question Analysis
+    Route::get('/analysis/questions', [AnalysisController::class, 'index'])->name('analysis.question.index');
+    Route::post('/analysis/questions/data', [AnalysisController::class, 'postQuestionAnalysisData'])->name('analysis.question.data');
+    Route::get('/analysis/questions/details', [AnalysisController::class, 'getQuestionDetails'])->name('analysis.question.details');
+
     // Examination Routes
     Route::get('/examination', [ExaminationController::class, 'index'])->name('examination.index');
+    Route::post('/examination/data', [ExaminationController::class, 'postExaminationData'])->name('examination.data');
 
     // Results Routes
     Route::get('/results', [ExamResultController::class, 'index'])->name('results.index');
@@ -94,4 +104,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/results/{id}/export/{type?}', [ExamResultController::class, 'exportResult'])
             ->name('results.export')
             ->where('type', 'excel|pdf');
+
+    // Token Management Routes
+    Route::get('/tokens', [TokenController::class, 'index'])->name('tokens.index');
+    Route::post('/tokens/data', [TokenController::class, 'postTokenData'])->name('tokens.data');
+    Route::post('/tokens/generate', [TokenController::class, 'generateTokens'])->name('tokens.generate');
+    Route::post('/tokens/delete', [TokenController::class, 'deleteTokens'])->name('tokens.delete');
+    Route::get('/tokens/qrcode/{tokenId}', [TokenController::class, 'generateQRCode'])->name('tokens.qrcode');
 });

@@ -60,7 +60,7 @@
         margin-left: 4px;
     }
 
-    #resultsTable td {
+    #questionTable td {
         vertical-align: middle;
     }
 </style>
@@ -72,12 +72,12 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Results</h1>
+            <h1>Question Analysis</h1>
           </div>
           <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Home</a></li>
-              <li class="breadcrumb-item active">Results</li>
+              <li class="breadcrumb-item active">Question Analysis</li>
             </ol>
           </div>
         </div>
@@ -118,89 +118,58 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
+                                        <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label for="nameFilter">Name</label>
-                                <select class="form-control select2bs4" name="nameFilter" id="nameFilter" style="width: 100%;">
+                                <label for="typeFilter">Type</label>
+                                <select class="form-control select2bs4" name="typeFilter" id="typeFilter" style="width: 100%;">
                                     <option value="all">All</option>
-                                    @foreach($examinees as $examinee)
-                                        <option value="{{ $examinee->id }}">{{ $examinee->full_name }}</option>
+                                    @foreach($types as $type)
+                                        <option value="{{ $type['id'] }}">{{ $type['description'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                     </div>
                     <div class="row">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label for="designationFilter">Designation</label>
-                            <select class="form-control select2bs4" name="designationFilter" id="designationFilter" style="width: 100%;">
-                                <option value="all">All</option>
-                                @foreach($designations as $designation)
-                                    <option value="{{ $designation }}">{{ $designation }}</option>
-                                @endforeach
-                            </select>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="difficultyFilter">Difficulty</label>
+                                <select class="form-control select2bs4" name="difficultyFilter" id="difficultyFilter" style="width: 100%;">
+                                    <option value="all">All</option>
+                                    @foreach($difficulties as $difficulty)
+                                        <option value="{{ $difficulty['id'] }}">{{ $difficulty['description'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
-                  </div>
-                  <div class="row">
-                      <div class="col-md-12">
-                          <div class="form-group">
-                              <label for="unitFilter">Unit</label>
-                              <select class="form-control select2bs4" name="unitFilter" id="unitFilter" style="width: 100%;">
-                                  <option value="all">All</option>
-                                  @foreach($units as $unitId => $unitName)
-                                      <option value="{{ $unitId }}">{{ $unitName }}</option>
-                                  @endforeach
-                              </select>
-                          </div>
-                      </div>
-                  </div>
                 </div>
             </div>
         </div>
         <div class="col-md-10">    
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Results List</h3>
+                    <h3 class="card-title">Question List</h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
                             <i class="fas fa-minus"></i>
                         </button>
                     </div>
-                    <div class="float-right">
-                        <div class="dropdown ml-2">
-                            <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="actionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-cog mr-2"></i> Options
-                            </button>
-                            <div class="dropdown-menu" aria-labelledby="actionsDropdown">
-                                <!-- Import Questionnaire -->
-                                <a class="dropdown-item text-info" href="#" data-toggle="modal" data-target="#import_questionnaire_modal">
-                                    <i class="fas fa-file-import mr-2"></i> Import Questionnaire
-                                </a>
-                                <!-- Add Item -->
-                                <a class="dropdown-item text-success" href="#" data-toggle="modal" data-target="#add_item_modal">
-                                    <i class="fas fa-plus mr-2"></i> Add Item
-                                </a>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div class="card-body">
-                    <table id="resultsTable" class="table table-sm table-hover text-center">
+                    <table id="questionTable" class="table table-sm table-hover text-center">
                         <thead>
                             <tr>
-                                <th>Examinee ID</th>
+                                <th>Question ID</th>
                                 <th>#</th>
-                                <th>Examination</th>
-                                <th>Name</th>
-                                <th>Designation</th>
-                                <th>Unit</th>
-                                <th>Total Questions</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Rating</th>
+                                <th>Exam Title</th>
+                                <th>Question</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Correct Answer</th>
+                                <th>Success Rate</th>
+                                <th>Correct Percentage</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -209,6 +178,28 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Details Modal -->
+<div class="modal fade" id="questionDetailsModal" tabindex="-1" role="dialog" aria-labelledby="questionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionDetailsModalLabel">Question Analysis Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="questionDetailsContent">
+                    <!-- Content will be loaded via AJAX -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -265,17 +256,36 @@
 <script>
     // Use Ajax to fetch data from the server based on filter options
     $(document).ready(function() {
-       var table = $('#resultsTable').DataTable({
+    
+        // Handle view details button click
+        $(document).on('click', '.view-details', function() {
+            var questionId = $(this).data('id');
+            
+            $.ajax({
+                url: "{{ route('analysis.question.details') }}",
+                type: "GET",
+                data: { question_id: questionId },
+                success: function(response) {
+                    $('#questionDetailsContent').html(response);
+                },
+                error: function(xhr) {
+                    toastr.error('Failed to load question details', 'Error');
+                }
+            });
+        });
+
+        // Initialize DataTable
+        var table = $('#questionTable').DataTable({
         dom: '<"d-flex justify-content-between"lBf>t<"d-flex justify-content-between"ip>',
         buttons: [
             { 
                 extend: 'excel', 
-                title: 'Results List',
+                title: 'Question Analysis List',
                 className: 'btn-default'
             },
             { 
                 extend: 'print', 
-                title: 'Results List',
+                title: 'Question Analysis List',
                 className: 'btn-default'
             }
         ],
@@ -289,7 +299,7 @@
         lengthMenu: [[20, 50, 100, 500, 1000], [20, 50, 100, 500, 1000]],
 
             ajax: {
-                url: "{{ route('results.data') }}",
+                url: "{{ route('analysis.question.data') }}",
                 type: "POST",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -297,9 +307,8 @@
                 data: function (d) {
                     d._token = "{{ csrf_token() }}";
                     d.examFilter = $('#examFilter').val();
-                    d.nameFilter = $('#nameFilter').val();
-                    d.designationFilter = $('#designationFilter').val();
-                    d.unitFilter = $('#unitFilter').val();
+                    d.typeFilter = $('#typeFilter').val();
+                    d.difficultyFilter = $('#difficultyFilter').val();
                     // Convert -1 to a very large number for server-side processing
                         if (d.length === -1) {
                             d.length = 1000000; // Or whatever maximum you want to support
@@ -342,42 +351,22 @@
                 }
             },
             columns: [
-                { data: 'id', name: 'id', class: 'hidden', orderable: false, searchable: false  },
-                { 
-                    data: 'number', 
-                    name: 'number', 
-                    orderable: false, 
-                    searchable: false,
-                    title: '#',
-                    className: 'text-center'
-                },
-                { data: 'exam', name: 'exam', orderable: false, searchable: false  },
-                { data: 'name', name: 'name', orderable: false, searchable: false  },
-                { data: 'designation', name: 'designation', orderable: false, searchable: false  },
-                { data: 'unit', name: 'unit', orderable: false, searchable: false  },
-                { data: 'total_question', name: 'total_question', orderable: false, searchable: false  },
-                { data: 'score', name: 'score', orderable: false, searchable: false  },
-                { data: 'percentage', name: 'percentage', orderable: false, searchable: false  },
-                { data: 'rating', name: 'rating', orderable: false, searchable: false  },
-                { data: 'action', name: 'action', orderable: false, searchable: false },
+                { data: 'id', name: 'id', visible: false },
+                { data: 'number', name: 'number', title: '#', className: 'text-center', orderable: false, searchable: false },
+                { data: 'exam', name: 'exam', title: 'Exam Title', orderable: false, searchable: false },
+                { data: 'question', name: 'question', title: 'Question Text', orderable: false, searchable: false },
+                { data: 'type', name: 'type', title: 'Type', orderable: false, searchable: false },
+                { data: 'difficulty', name: 'difficulty', title: 'Difficulty', orderable: false, searchable: false },
+                { data: 'correct_answer', name: 'correct_answer', title: 'Correct Answer', orderable: false, searchable: false },
+                { data: 'success_rate', name: 'success_rate', title: 'Success Rate', orderable: false, searchable: false },
+                { data: 'correct_percentage', name: 'correct_percentage', title: 'Correct Percentage', orderable: false, searchable: false },
+                { data: 'action', name: 'action', title: 'Actions', orderable: false, searchable: false }
             ],
-            order: [[0, 'desc']],
-            createdRow: function(row, data, dataIndex) {
-                var rating = data.rating;
-                var $ratingCell = $(row).find('td:eq(9)'); // Rating is the 9th column (0-based index 8)
-
-                if (rating.includes('Failed')) {
-                  $ratingCell.css('color', '#dc3545');
-                  $ratingCell.css('font-weight', 'bold');
-                } else {
-                  $ratingCell.css('color', '#28a745');
-                  $ratingCell.css('font-weight', 'bold');
-                }
-            }
+            order: [[0, 'asc']]
        });
 
         // Filter event handlers
-        $('#examFilter, #nameFilter, #designationFilter, #unitFilter').on('change keyup', function() {
+        $('#examFilter, #typeFilter, #difficultyFilter').on('change keyup', function() {
             table.ajax.reload();
         });
 
@@ -386,23 +375,21 @@
             // Get current filter values
             const currentFilters = {
                 exam: $('#examFilter').val('all'),
-                name: $('#nameFilter').val('all'),
-                designation: $('#designationFilter').val('all'),
-                unit: $('#unitFilter').val('all'),
+                type: $('#typeFilter').val('all'),
+                difficulty: $('#difficultyFilter').val('all')
             };
 
             // Check if any filter is not at its default value
-            const needsReset = currentFilters.exam !== '' || currentFilters.name !== '' || currentFilters.designation !== '' || currentFilters.unit !== '';
+            const needsReset = currentFilters.exam !== '' || currentFilters.type !== '' || currentFilters.difficulty !== '';
 
             // Only reset if needed
             if (needsReset) {
                 // Clear input fields
                 $('#examFilter').val('all').trigger('change');
-                $('#nameFilter').val('all').trigger('change');
-                $('#designationFilter').val('all').trigger('change');
-                $('#unitFilter').val('all').trigger('change');
+                $('#typeFilter').val('all').trigger('change');
+                $('#difficultyFilter').val('all').trigger('change');
                 // Reload DataTable
-                $('#resultsTable').DataTable().ajax.reload();
+                $('#questionTable').DataTable().ajax.reload();
             }
         });
     });
