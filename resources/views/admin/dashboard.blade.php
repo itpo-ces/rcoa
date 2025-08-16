@@ -30,16 +30,9 @@
 
 @section('content')
 <div class="container-fluid">
-  @foreach($tokens as $token)
-    @if($token->status === \App\Models\Token::STATUS_IN_USE)
-      <span class="badge badge-warning">In Use</span>
-    @elseif($token->status === \App\Models\Token::STATUS_USED)
-      <span class="badge badge-secondary">Used</span>
-    @else
-      <span class="badge badge-success">Available</span>
-    @endif
-    <br> <!-- Optional line break between tokens -->
-  @endforeach
+<div class="alert alert-info text-center mt-5" role="alert">
+  This feature is coming soon. Stay tuned!
+</div>
 </div>
 @endsection
 
