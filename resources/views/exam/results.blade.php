@@ -19,7 +19,7 @@
                         </div>
                         
                         {{-- <h4 class="mt-4">Rating: <span class="badge {{ str_contains($proficiency, 'Failed') ? 'badge-danger' : 'badge-success' }}" style="font-size: 1.2em">{{ $proficiency }}</span></h4> --}}
-                        <h4 class="mt-4">Rating: 
+                        <h4 class="mt-4">
                             <span style="font-size: 1.2em; font-weight: bold; color: {{ str_contains($proficiency, 'Failed') ? '#dc3545' : '#28a745' }};">
                                 {{ $proficiency }}
                             </span>
