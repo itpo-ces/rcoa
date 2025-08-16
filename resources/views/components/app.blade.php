@@ -47,6 +47,19 @@
             position: relative;
             z-index: 1; /* Ensure navbar is above particles */
         }
+
+        .header-title {
+            white-space: normal;     /* allow wrapping */
+            word-break: break-word;  /* break long words if needed */
+            font-size: 1.5rem;         /* default size */
+        }
+
+        @media (max-width: 576px) {  /* for phones */
+            .header-title {
+                font-size: 1.1rem;  /* shrink text */
+                line-height: 1.2;    /* tighter spacing */
+            }
+        }
     </style>
 </head>
 <body class="font-sans antialiased">
@@ -59,7 +72,7 @@
             <div class="container">
                 <a class="navbar-brand fw-bold fs-4" href="{{ route('welcome') }}">
                     <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="d-inline-block align-top" style="width: 30px; height: 30px; margin-right: 10px;">
-                    Radio Communication Online Assessment
+                    <span class="header-title">Radio Communication Online Assessment</span>
                 </a>
                 @if(session()->has('exam_started'))
                 <div class="text-white" id="g-timer">
