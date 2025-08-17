@@ -173,6 +173,54 @@
         </div>
     </div>
 </div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="add_item_modal" tabindex="-1" role="dialog" aria-labelledby="add_item_modal_label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="add_item_modal_label">Add Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="add_item_form">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" placeholder="Enter title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exam_date">Exam Date</label>
+                        <input type="date" class="form-control" id="exam_date" name="exam_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="start_time">Start Time</label>
+                        <input type="time" class="form-control" id="start_time" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end_time">End Time</label>
+                        <input type="time" class="form-control" id="end_time" name="end_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration</label>
+                        <input type="number" class="form-control" id="duration" name="duration" placeholder="Enter duration in minutes" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="no_of_questions">No of Questions</label>
+                        <input type="number" class="form-control" id="no_of_questions" name="no_of_questions" placeholder="Enter no of questions" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form="add_item_form">Add Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Import Examination Modal -->
+
 @endsection
 
 @section('script')

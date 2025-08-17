@@ -256,8 +256,8 @@ class ExamController extends Controller
             // Difficulty distribution
             $difficultyDistribution = [
                 'easy' => 0.40,
-                'moderate' => 0.30,
-                'difficult' => 0.25,
+                'moderate' => 0.35,
+                'difficult' => 0.20,
                 'extra_difficult' => 0.05
             ];
 
