@@ -156,6 +156,19 @@
                             <i class="fas fa-minus"></i>
                         </button>
                     </div>
+                    <div class="float-right">
+                        <div class="dropdown ml-2">
+                            <button class="btn btn-sm btn-dark dropdown-toggle" type="button" id="actionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-cog mr-2"></i> Options
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="actionsDropdown">
+                                <!-- Export All Analysis -->
+                                <button class="dropdown-item text-info" id="exportAllAnalysisBtn">
+                                    <i class="fas fa-file-export mr-2"></i> Export All Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <table id="questionTable" class="table table-sm table-hover text-center">
@@ -391,6 +404,61 @@
                 // Reload DataTable
                 $('#questionTable').DataTable().ajax.reload();
             }
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        $('#exportAllAnalysisBtn').click(function() {
+            // Get current filter values
+            const filters = {
+                examFilter: $('#examFilter').val(),
+                typeFilter: $('#typeFilter').val(),
+                difficultyFilter: $('#difficultyFilter').val()
+            };
+
+            // Show loading indicator
+            Swal.fire({
+                title: 'Preparing Export',
+                html: 'Please wait while we prepare your analysis export...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Submit form with filters
+            $.ajax({
+                url: "{{ route('analysis.export-all') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    ...filters
+                },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function(response) {
+                    Swal.close();
+                    
+                    // Create download link
+                    const blob = new Blob([response]);
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'Question_Analysis_' + new Date().toISOString().slice(0,10) + '.xlsx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Export Failed',
+                        text: 'An error occurred while preparing the export. Please try again.'
+                    });
+                    console.error('Export error:', xhr.responseText);
+                }
+            });
         });
     });
 </script>

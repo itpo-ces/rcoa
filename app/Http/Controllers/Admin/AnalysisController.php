@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Question;
 use App\Models\Exam;
 use App\Models\ExamResponse;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\QuestionAnalysisExport;
 
 class AnalysisController extends Controller
 {
@@ -210,6 +212,28 @@ class AnalysisController extends Controller
             'commonIncorrect',
             'incorrectResponses'
         ));
+    }
+
+    public function exportAllAnalysis(Request $request)
+    {
+        try {
+            $filters = [
+                'examFilter' => $request->input('examFilter', 'all'),
+                'typeFilter' => $request->input('typeFilter', 'all'),
+                'difficultyFilter' => $request->input('difficultyFilter', 'all'),
+            ];
+
+            $filename = 'Question_Analysis_' . now()->format('Ymd_His');
+
+            return Excel::download(
+                new QuestionAnalysisExport($filters),
+                $filename . '.xlsx'
+            );
+
+        } catch (\Exception $e) {
+            \Log::error('Export all analysis failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to export analysis. Please try again.');
+        }
     }
 
 }

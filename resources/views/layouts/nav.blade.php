@@ -129,6 +129,15 @@
                 </a>
             </li>
 
+            <li class="nav-item d-none">
+                <a href="{{ route('resultss.auto.index') }}" class="nav-link @if(Route::currentRouteName() == 'resultss.auto.index') active @endif">
+                  <i class="nav-icon fas fa-user-graduate"></i>
+                  <p>
+                    Results Automation
+                  </p>
+                </a>
+            </li>
+
             <li class="nav-item">
                 <a href="{{ route('tokens.index') }}" class="nav-link @if(Route::currentRouteName() == 'tokens.index') active @endif">
                   <i class="nav-icon fas fa-user-graduate"></i>

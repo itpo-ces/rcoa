@@ -7,20 +7,19 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Exports\ExamResultExport;
-use App\Exports\ExamResultsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Result;
 use App\Models\Exam;
 use App\Models\Examinee;
 use App\Models\ExamResponse;
 use App\Models\Question;
 use App\Models\Unit;
-use App\Models\ExamResult;
 
-class ExamResultController extends Controller
+class ResultController extends Controller
 {
-        public function index()
+    public function index()
     {
         $exams = Exam::all();
         $examinees = Examinee::with('responses')->get()->map(function ($examinee) {
@@ -35,7 +34,7 @@ class ExamResultController extends Controller
         $units = Unit::whereIn('UnitId', Examinee::distinct()->pluck('unit'))
                 ->pluck('OrderNumberPrefix', 'UnitId');
 
-        return view('admin.results', compact('exams', 'examinees', 'designations', 'units'));
+        return view('admin.resultss', compact('exams', 'examinees', 'designations', 'units'));
     }
 
     public function postResultsData(Request $request)
@@ -58,41 +57,35 @@ class ExamResultController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            // Get the validated data
             $validated = $validator->validated();
 
-            // Set memory limit and timeout for large queries
-            ini_set('memory_limit', '512M');
-            DB::statement('SET SESSION wait_timeout=120');
-            set_time_limit(120);
-
-            // Base query to get results with related data
-            $query = ExamResult::with([
-                'examinee.unit',
-                'exam'
-            ])->select('exam_results.*');
+            // Base query to get examinees with their exam results
+            $query = Examinee::with(['responses.question.exam', 'token', 'unit'])
+                ->select('examinees.*')
+                ->addSelect([
+                    'total_questions' => ExamResponse::selectRaw('COUNT(DISTINCT question_id)')
+                        ->whereColumn('examinee_id', 'examinees.id'),
+                    'score' => ExamResponse::selectRaw('SUM(is_correct)')
+                        ->whereColumn('examinee_id', 'examinees.id')
+                ]);
 
             // Apply filters
             if (($validated['examFilter'] ?? 'all') != 'all') {
-                $query->where('exam_id', $validated['examFilter']);
+                $query->whereHas('responses.question', function($q) use ($validated) {
+                    $q->where('exam_id', $validated['examFilter']);
+                });
             }
 
             if (($validated['nameFilter'] ?? 'all') != 'all') {
-                $query->whereHas('examinee', function($q) use ($validated) {
-                    $q->where('id', $validated['nameFilter']);
-                });
+                $query->where('id', $validated['nameFilter']);
             }
 
             if (($validated['designationFilter'] ?? 'all') != 'all') {
-                $query->whereHas('examinee', function($q) use ($validated) {
-                    $q->where('designation', $validated['designationFilter']);
-                });
+                $query->where('designation', $validated['designationFilter']);
             }
 
             if (($validated['unitFilter'] ?? 'all') != 'all') {
-                $query->whereHas('examinee', function($q) use ($validated) {
-                    $q->where('unit', $validated['unitFilter']);
-                });
+                $query->where('unit', $validated['unitFilter']);
             }
 
             // Get total count before pagination
@@ -103,30 +96,52 @@ class ExamResultController extends Controller
             $length = $validated['length'] ?? 20;
             
             if ($length == -1) {
-                $results = $query->skip($start)->get();
+                $examinees = $query->skip($start)->get();
             } else {
-                $results = $query->skip($start)->take($length)->get();
+                $examinees = $query->skip($start)->take($length)->get();
             }
 
             // Format data for DataTables
-            $data = $results->map(function ($result, $index) use ($start) {
-                $examinee = $result->examinee;
+            $data = $examinees->map(function ($examinee, $index) use ($start) {
+                $totalQuestions = $examinee->total_questions ?? 0;
+                $score = $examinee->score ?? 0;
+                $percentage = $totalQuestions > 0 ? round(($score / $totalQuestions) * 100) : 0;
+
+                // Determine rating based on percentage
+                if ($percentage >= 95) {
+                    $rating = 'Passed (100%)';
+                } elseif ($percentage >= 90) {
+                    $rating = 'Passed (94%)';
+                } elseif ($percentage >= 85) {
+                    $rating = 'Passed (89%)';
+                } elseif ($percentage >= 80) {
+                    $rating = 'Passed (84%)';
+                } elseif ($percentage >= 76) {
+                    $rating = 'Passed (80%)';
+                } elseif ($percentage == 75) {
+                    $rating = 'Passed (75%)';
+                } else {
+                    $rating = 'Failed (' . $percentage . '%)';
+                }
+
+                // Get exam title (assuming each examinee took one exam)
+                $examTitle = $examinee->responses->first()->question->exam->title ?? 'N/A';
 
                 // Get the Description of unit
                 $unitDescription = $examinee->unit_description;
-                
+
                 return [
+                    'id' => $examinee->id,
                     'number' => $start + $index + 1,
-                    'id' => $result->id,
-                    'exam' => $result->exam->title ?? 'N/A',
+                    'exam' => $examTitle,
                     'name' => $examinee->full_name,
                     'designation' => $examinee->designation,
-                    'unit' => $examinee->unit_description,
-                    'total_question' => $result->total_questions,
-                    'score' => $result->score,
-                    'percentage' => $result->percentage . '%',
-                    'rating' => $result->rating,
-                    'action' => $this->getActionButtons($result)
+                    'unit' => $unitDescription,
+                    'total_question' => $totalQuestions,
+                    'score' => $score,
+                    'percentage' => $percentage . '%',
+                    'rating' => $rating,
+                    'action' => $this->getActionButtons($examinee)
                 ];
             });
 
@@ -181,29 +196,6 @@ class ExamResultController extends Controller
         } catch (\Exception $e) {
             \Log::error("Export failed for result ID {$id}: " . $e->getMessage());
             return back()->with('error', 'Failed to generate export. Please try again.');
-        }
-    }
-
-    public function exportAllResults(Request $request)
-    {
-        try {
-            $filters = [
-                'examFilter' => $request->input('examFilter', 'all'),
-                'nameFilter' => $request->input('nameFilter', 'all'),
-                'designationFilter' => $request->input('designationFilter', 'all'),
-                'unitFilter' => $request->input('unitFilter', 'all'),
-            ];
-
-            $filename = 'Exam_Results_' . now()->format('Ymd_His');
-
-            return Excel::download(
-                new ExamResultsExport($filters),
-                $filename . '.xlsx'
-            );
-
-        } catch (\Exception $e) {
-            \Log::error('Export all results failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to export results. Please try again.');
         }
     }
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ExamResultController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\AnalysisController;
 use App\Http\Controllers\Admin\TokenController;
+use App\Http\Controllers\Admin\ResultController;
 use App\Http\Controllers\ExamController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
@@ -92,6 +93,10 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('/analysis/questions/data', [AnalysisController::class, 'postQuestionAnalysisData'])->name('analysis.question.data');
     Route::get('/analysis/questions/details', [AnalysisController::class, 'getQuestionDetails'])->name('analysis.question.details');
 
+    // Export All Analysis
+    Route::post('/analysis/export-all', [AnalysisController::class, 'exportAllAnalysis'])
+        ->name('analysis.export-all');
+
     // Examination Routes
     Route::get('/examination', [ExaminationController::class, 'index'])->name('examination.index');
     Route::post('/examination/data', [ExaminationController::class, 'postExaminationData'])->name('examination.data');
@@ -103,6 +108,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
     Route::get('/results/{id}/export/{type?}', [ExamResultController::class, 'exportResult'])
             ->name('results.export')
+            ->where('type', 'excel|pdf');
+
+    Route::post('/results/export-all', [ExamResultController::class, 'exportAllResults'])
+        ->name('results.export-all');
+
+    ////////////////////////////////////////////////////
+        // Results Routes
+    Route::get('/resultss', [ResultController::class, 'index'])->name('resultss.auto.index');
+    Route::post('/resultss/data', [ResultController::class, 'postResultsData'])->name('resultss.auto.data');
+    Route::get('/resultss/{id}', [ResultController::class, 'show'])->name('resultss.auto.show');
+
+    Route::get('/resultss/{id}/export/{type?}', [ResultController::class, 'exportResult'])
+            ->name('resultss.auto.export')
             ->where('type', 'excel|pdf');
 
     // Token Management Routes

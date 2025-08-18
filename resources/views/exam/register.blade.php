@@ -22,7 +22,7 @@
                                     <option value="PMGEN" @if(old('rank') == 'PMGEN') selected @endif>PMGEN</option>
                                     <option value="PBGEN" @if(old('rank') == 'PBGEN') selected @endif>PBGEN</option>
                                     <option value="PCOL" @if(old('rank') == 'PCOL') selected @endif>PCOL</option>
-                                    <option value="PTCOL" @if(old('rank') == 'PTCOL') selected @endif>PTCOL</option>
+                                    <option value="PLTCOL" @if(old('rank') == 'PLTCOL') selected @endif>PLTCOL</option>
                                     <option value="PMAJ" @if(old('rank') == 'PMAJ') selected @endif>PMAJ</option>
                                     <option value="PCPT" @if(old('rank') == 'PCPT') selected @endif>PCPT</option>
                                     <option value="PLT" @if(old('rank') == 'PLT') selected @endif>PLT</option>

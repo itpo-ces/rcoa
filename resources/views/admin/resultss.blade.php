@@ -175,10 +175,14 @@
                                 <i class="fas fa-cog mr-2"></i> Options
                             </button>
                             <div class="dropdown-menu" aria-labelledby="actionsDropdown">
-                                <!-- Export All Results -->
-                                <button class="dropdown-item text-info" id="exportAllResultsBtn">
-                                    <i class="fas fa-file-export mr-2"></i> Export All Results
-                                </button>
+                                <!-- Import Questionnaire -->
+                                <a class="dropdown-item text-info" href="#" data-toggle="modal" data-target="#import_questionnaire_modal">
+                                    <i class="fas fa-file-import mr-2"></i> Import Questionnaire
+                                </a>
+                                <!-- Add Item -->
+                                <a class="dropdown-item text-success" href="#" data-toggle="modal" data-target="#add_item_modal">
+                                    <i class="fas fa-plus mr-2"></i> Add Item
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -285,7 +289,7 @@
         lengthMenu: [[20, 50, 100, 500, 1000], [20, 50, 100, 500, 1000]],
 
             ajax: {
-                url: "{{ route('results.data') }}",
+                url: "{{ route('resultss.auto.data') }}",
                 type: "POST",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -355,7 +359,7 @@
                 { data: 'score', name: 'score', orderable: false, searchable: false  },
                 { data: 'percentage', name: 'percentage', orderable: false, searchable: false  },
                 { data: 'rating', name: 'rating', orderable: false, searchable: false  },
-                { data: 'action', name: 'action', class: 'hidden', orderable: false, searchable: false },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             order: [[0, 'desc']],
             createdRow: function(row, data, dataIndex) {
@@ -400,62 +404,6 @@
                 // Reload DataTable
                 $('#resultsTable').DataTable().ajax.reload();
             }
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#exportAllResultsBtn').click(function() {
-            // Get current filter values
-            const filters = {
-                examFilter: $('#examFilter').val(),
-                nameFilter: $('#nameFilter').val(),
-                designationFilter: $('#designationFilter').val(),
-                unitFilter: $('#unitFilter').val()
-            };
-
-            // Show loading indicator
-            Swal.fire({
-                title: 'Preparing Export',
-                html: 'Please wait while we prepare your export file...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            // Submit form with filters
-            $.ajax({
-                url: "{{ route('results.export-all') }}",
-                type: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    ...filters
-                },
-                xhrFields: {
-                    responseType: 'blob'
-                },
-                success: function(response) {
-                    Swal.close();
-                    
-                    // Create download link
-                    const blob = new Blob([response]);
-                    const link = document.createElement('a');
-                    link.href = window.URL.createObjectURL(blob);
-                    link.download = 'Exam_Results_' + new Date().toISOString().slice(0,10) + '.xlsx';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                },
-                error: function(xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Export Failed',
-                        text: 'An error occurred while preparing the export. Please try again.'
-                    });
-                    console.error('Export error:', xhr.responseText);
-                }
-            });
         });
     });
 </script>
