@@ -251,9 +251,47 @@
         });
     }
 
+    // function saveAndContinue() {
+    //     const form = document.getElementById('answer-form');
+    //     const formData = new FormData(form);
+
+    //     // Add current question number to form data
+    //     formData.append('current_question', {{ $question_number }});
+        
+    //     fetch('{{ route("exam.save-answer") }}', {
+    //         method: 'POST',
+    //         body: formData,
+    //         headers: {
+    //             'X-CSRF-TOKEN': '{{ csrf_token() }}',
+    //             'Accept': 'application/json'
+    //         }
+    //     })
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             return response.json().then(err => Promise.reject(err));
+    //         }
+    //         return response.json();
+    //     })
+    //     .then(data => {
+    //         if (data.success) {
+    //             window.location.href = '{{ route("exam.question", ["question_number" => $question_number + 1]) }}';
+    //         }
+    //     })
+    //     .catch(error => {
+    //         if (error.errors) {
+    //             toastr.error(error.errors.join('<br>'), 'Error', {timeOut: 5000, progressBar: true, escapeHtml: false});
+    //         } else {
+    //             toastr.error('An error occurred. Please try again.', 'Error');
+    //         }
+    //     });
+    // }
+
     function saveAndContinue() {
         const form = document.getElementById('answer-form');
         const formData = new FormData(form);
+
+        // Add current question number to form data (1-based)
+        formData.append('current_question', {{ $question_number }});
         
         fetch('{{ route("exam.save-answer") }}', {
             method: 'POST',

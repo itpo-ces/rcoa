@@ -15,6 +15,16 @@ class StartedExamMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Allow access to results page even if exam not started
+        if ($request->route()->named('exam.results')) {
+            return $next($request);
+        }
+
+        // Allow access to finish route even if exam not started
+        if ($request->route()->named('exam.finish')) {
+            return $next($request);
+        }
+
         if (!session()->has('exam_started')) {
             return redirect()->route('exam.instructions')->with('error', 'Please start the exam first.');
         }

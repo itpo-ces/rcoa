@@ -25,7 +25,12 @@ class ExamController extends Controller
                 return redirect()->route('exam.certification');
             }
         }
-        return view('exam.start');
+        // Get examinee if token exists in session
+        $examinee = null;
+        if (session()->has('token_id')) {
+            $examinee = Examinee::where('token_id', session('token_id'))->first();
+        }
+        return view('exam.start', compact('examinee'));
     }
     
     public function validateToken(Request $request)
@@ -237,13 +242,7 @@ class ExamController extends Controller
                 return back()->with('error', 'Exam is not available. Please contact the administrator.');
             }
 
-            // // Mark token as in use
-            // Token::where('id', session('token_id'))->update([
-            //     'status' => Token::STATUS_IN_USE,
-            //     'is_used' => false // Still not fully used until submission
-            // ]);
-
-            $questionLimit = $exam->number_of_questions ?? 30;
+            $questionLimit = $exam->number_of_questions ?? 50;
 
             // Question type distribution
             $typeDistribution = [
@@ -281,10 +280,15 @@ class ExamController extends Controller
             foreach ($targetCounts as $type => $difficulties) {
                 foreach ($difficulties as $difficulty => $count) {
                     $toTake = floor($count);
-                    $questions = $allQuestions->get($type, collect())
+                    $available = $allQuestions->get($type, collect())
                         ->get($difficulty, collect())
-                        ->shuffle()
-                        ->take($toTake);
+                        ->shuffle();
+
+                    if ($available->count() < $toTake) {
+                        \Log::warning("Not enough {$type} - {$difficulty} questions. Needed {$toTake}, got {$available->count()}.");
+                    }
+
+                    $questions = $available->take($toTake);
                     $selectedQuestions = $selectedQuestions->concat($questions);
                 }
             }
@@ -311,20 +315,37 @@ class ExamController extends Controller
                     return $b['fraction'] <=> $a['fraction'];
                 });
 
-                // Take one from each category until we reach the limit
                 foreach ($flattenedTargets as $target) {
                     if ($remaining <= 0) break;
-                    
-                    $questions = $allQuestions->get($target['type'], collect())
+
+                    $available = $allQuestions->get($target['type'], collect())
                         ->get($target['difficulty'], collect())
-                        ->shuffle()
-                        ->take(1)
-                        ->diff($selectedQuestions);
-                    
-                    if ($questions->isNotEmpty()) {
-                        $selectedQuestions = $selectedQuestions->concat($questions);
+                        ->shuffle();
+
+                    // Pick one unique question if possible
+                    $extra = $available->first(function ($q) use ($selectedQuestions) {
+                        return !$selectedQuestions->contains('id', $q->id);
+                    });
+
+                    if ($extra) {
+                        $selectedQuestions->push($extra);
                         $remaining--;
                     }
+                }
+            }
+
+            // Final balancing loop (fill-up from ANY active question if still short)
+            while ($remaining > 0) {
+                $extra = $exam->questions()
+                    ->where('is_active', 1)
+                    ->inRandomOrder()
+                    ->first();
+
+                if ($extra && !$selectedQuestions->contains('id', $extra->id)) {
+                    $selectedQuestions->push($extra);
+                    $remaining--;
+                } else {
+                    break; // no more unique questions available
                 }
             }
 
@@ -335,6 +356,16 @@ class ExamController extends Controller
                 return back()->with('error', 'No questions found for this exam.');
             }
 
+            // Initialize exam progress tracking
+            $examinee = Examinee::where('token_id', session('token_id'))->first();
+            $examinee->update([
+                'last_question_number' => 1, // Start at question 1
+                'exam_progress' => [
+                    'questions' => $questions->pluck('id')->toArray(),
+                    'answers' => []
+                ]
+            ]);
+            
             // Set session data
             session([
                 'exam_started' => true,
@@ -347,56 +378,71 @@ class ExamController extends Controller
 
             return redirect()->route('exam.question', ['question_number' => 1]);
         } catch (\Exception $e) {
-            \Log::error('Start Exam Error: ' . $e->getMessage());
+            \Log::error('startExam Error: ' . $e->getMessage());
             return back()->with('error', 'An unexpected error occurred while starting the exam. Please try again.');
         }
     }
-    
+
     public function showQuestion($question_number)
     {
         try {
+            // Check if we need to resume exam
+            if (!session()->has('exam_started') && session()->has('token_id')) {
+                return $this->resumeExam();
+            }
+
             // Validate exam session
             if (!session()->has('exam_started')) {
                 return redirect()->route('exam.instructions')->with('error', 'Please start the exam first.');
             }
 
-            // Check if time has expired
+            // Validate question number
+            if ($question_number < 1 || $question_number > count(session('questions', []))) {
+                abort(404);
+            }
+
+            // Update current question in session (0-based index)
+            session(['current_question' => $question_number - 1]);
+
+            // Update examinee's last question
+            $examinee = Examinee::where('token_id', session('token_id'))->first();
+            if ($examinee) {
+                $examinee->update([
+                    'last_question_number' => $question_number,
+                    'exam_progress' => [
+                        'questions' => session('questions'),
+                        'answers' => session('answers', [])
+                    ]
+                ]);
+            }
+
+            // Check remaining time
             $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
             if ($remainingTime <= 0) {
                 return redirect()->route('exam.certification');
             }
 
-            $question_index = $question_number - 1;
-            $questions = session('questions');
-
-            if (!is_array($questions) || $question_index < 0 || $question_index >= count($questions)) {
-                abort(404);
-            }
-
-            $question = Question::find($questions[$question_index]);
+            // Get current question
+            $question = Question::find(session('questions')[$question_number - 1]);
 
             if (!$question) {
                 return redirect()->route('exam.instructions')->with('error', 'Question not found.');
             }
 
-            // Calculate remaining time in seconds
-            $remainingTime = max(0, strtotime(session('exam_end_time')) - time());
-
-            if ($remainingTime <= 0) {
-                // return redirect()->route('exam.submit')->with('warning', 'Time has expired.');
-                return redirect()->route('exam.certification');
-            }
-
             return view('exam.question', [
                 'question' => $question,
                 'question_number' => $question_number,
-                'total_questions' => count($questions),
+                'total_questions' => count(session('questions')),
                 'remaining_time' => $remainingTime
             ]);
         } catch (\Exception $e) {
-            \Log::error('Show Question Error: ' . $e->getMessage());
-
-            return redirect()->route('exam.instructions')->with('error', 'An error occurred while loading the question. Please try again.');
+            \Log::error('Show Question Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'session_data' => session()->all(),
+                'question_number' => $question_number ?? null
+            ]);
+            return redirect()->route('exam.instructions')
+                ->with('error', 'An error occurred while loading the question. Please try again.');
         }
     }
     
@@ -405,33 +451,44 @@ class ExamController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'question_id' => 'required|exists:questions,id',
-                'answer' => 'required'
-            ], [
-                'question_id.required' => 'Question ID is required.',
-                'question_id.exists' => 'The selected question does not exist.',
-                'answer.required' => 'Please select an answer before continuing.'
+                'answer' => 'required',
+                'current_question' => 'sometimes|numeric'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'errors' => $validator->errors()->all()
-                ], 422); // Unprocessable Entity
+                ], 422);
             }
 
-            // Save the answer in session
+            // Save answer in session
             $answers = session('answers', []);
             $answers[$request->question_id] = $request->answer;
             session(['answers' => $answers]);
 
+            // Get current question number
+            $currentQuestionNumber = (int)($request->current_question ?? session('current_question', 0) + 1);
+
+            // Update examinee progress
+            $examinee = Examinee::where('token_id', session('token_id'))->first();
+            if ($examinee) {
+                $examinee->update([
+                    'last_question_number' => $currentQuestionNumber,
+                    'exam_progress' => [
+                        'questions' => session('questions'),
+                        'answers' => $answers
+                    ]
+                ]);
+            }
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             \Log::error('Save Answer Error: ' . $e->getMessage());
-
             return response()->json([
                 'success' => false,
                 'errors' => ['An unexpected error occurred while saving the answer. Please try again.']
-            ], 500); // Internal Server Error
+            ], 500);
         }
     }
 
@@ -473,7 +530,9 @@ class ExamController extends Controller
             }
 
             $examinee->update([
-                'accepted_certification' => true
+                'accepted_certification' => true,
+                'last_question_number' => null,
+                'exam_progress' => null
             ]);
 
             if (!$questions->count()) {
@@ -541,17 +600,41 @@ class ExamController extends Controller
                 'status' => 'completed'
             ]);
 
-            // Store results in session
+            // Store results in session FIRST
             session([
                 'exam_score' => $score,
                 'total_questions' => $totalQuestions,
-                'proficiency' => $proficiency
+                'proficiency' => $proficiency,
+                'exam_submitted' => true,
+                'examinee_full_name' => session('examinee_full_name')
             ]);
+
+            // Clear other exam data from session
+            session()->forget([
+                'exam_started',
+                'exam_start_time',
+                'exam_end_time',
+                'questions',
+                'current_question',
+                'answers'
+            ]);
+
+            \Log::info('Exam submitted successfully', [
+                'examinee_id' => $examinee->id,
+                'score' => $score,
+                'total_questions' => $totalQuestions
+            ]);
+
+            \Log::debug('Session before redirect', session()->all());
 
             return redirect()->route('exam.results');
 
         } catch (\Exception $e) {
             \Log::error('Submit Exam Error: ' . $e->getMessage());
+            \Log::debug('Redirecting to results', [
+                'session_data' => session()->all(),
+                'route' => route('exam.results')
+            ]);
             return redirect()->route('exam.instructions')->with('error', 'An unexpected error occurred while submitting your exam. Please contact the administrator.');
         }
     }
@@ -578,11 +661,22 @@ class ExamController extends Controller
 
         return view('exam.certification');
     }
-    
+
     public function showResults()
     {
-        if (!session()->has('exam_score')) {
-            return redirect()->route('exam.start');
+        if (!session()->has('exam_submitted')) {
+            \Log::error('Attempt to access results without submission', [
+                'session_data' => session()->all()
+            ]);
+            return redirect()->route('exam.start')->with('error', 'Please complete an exam first to view results.');
+        }
+        
+        // Verify we have all required result data
+        if (!session()->has('exam_score') || !session()->has('total_questions') || !session()->has('proficiency')) {
+            \Log::error('Incomplete results data in session', [
+                'session_data' => session()->all()
+            ]);
+            return redirect()->route('exam.start')->with('error', 'Exam results data is incomplete. Please contact support.');
         }
         
         return view('exam.results', [
@@ -595,8 +689,20 @@ class ExamController extends Controller
 
     public function finishExam()
     {
-        session()->flush();
-        return redirect()->route('welcome')->with('success', 'Exam session closed. Thank you!');
+        try {
+            \Log::debug('Finishing exam', ['session' => session()->all()]);
+            
+            $message = session()->has('exam_score') 
+                ? 'Exam session closed. Thank you!' 
+                : 'Session cleared';
+                
+            session()->flush();
+            
+            return redirect()->route('welcome')->with('success', $message);
+        } catch (\Exception $e) {
+            \Log::error('Finish Exam Error: ' . $e->getMessage());
+            return redirect()->route('welcome')->with('error', 'An error occurred while closing the session.');
+        }
     }
     
     public function getSubunits(Request $request)
@@ -617,5 +723,70 @@ class ExamController extends Controller
                         ->where('IsActive',1)
                         ->get();                                              
         return response()->json($station);          
+    }
+
+    public function resumeExam()
+    {
+        try {
+            $examinee = Examinee::where('token_id', session('token_id'))->first();
+            
+            if (!$examinee) {
+                \Log::error('Resume Exam: No examinee found for token_id: ' . session('token_id'));
+                return redirect()->route('exam.instructions')->with('error', 'Examinee record not found.');
+            }
+
+            if (!$examinee->last_question_number || empty($examinee->exam_progress)) {
+                \Log::error('Resume Exam: No progress data found', [
+                    'examinee_id' => $examinee->id,
+                    'has_last_question' => !empty($examinee->last_question_number),
+                    'has_exam_progress' => !empty($examinee->exam_progress)
+                ]);
+                return redirect()->route('exam.instructions')->with('error', 'No exam progress to resume.');
+            }
+
+            $exam = Exam::first();
+            if (!$exam) {
+                \Log::error('Resume Exam: No exam found');
+                return redirect()->route('exam.instructions')->with('error', 'Exam not found.');
+            }
+
+            // Validate exam progress data
+            if (!isset($examinee->exam_progress['questions']) || !is_array($examinee->exam_progress['questions'])) {
+                \Log::error('Resume Exam: Invalid exam_progress format', ['exam_progress' => $examinee->exam_progress]);
+                return redirect()->route('exam.instructions')->with('error', 'Invalid exam progress data.');
+            }
+
+            // Calculate remaining time (max duration or remaining time)
+            $originalDuration = $exam->duration_minutes * 60;
+            $elapsedTime = $examinee->updated_at->diffInSeconds(now());
+            $remainingTime = max(0, $originalDuration - $elapsedTime);
+
+            // Restore exam session
+            session([
+                'exam_started' => true,
+                'exam_start_time' => now()->subSeconds($originalDuration - $remainingTime)->toDateTimeString(),
+                'exam_end_time' => now()->addSeconds($remainingTime)->toDateTimeString(),
+                'questions' => $examinee->exam_progress['questions'],
+                'current_question' => $examinee->last_question_number - 1, // Convert to 0-based index
+                'answers' => $examinee->exam_progress['answers'] ?? []
+            ]);
+
+            \Log::info('Exam resumed successfully', [
+                'examinee_id' => $examinee->id,
+                'last_question_number' => $examinee->last_question_number,
+                'remaining_time' => $remainingTime
+            ]);
+
+            return redirect()->route('exam.question', [
+                'question_number' => $examinee->last_question_number
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Resume Exam Error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('exam.instructions')->with('error', 'Failed to resume exam. Please start a new exam.');
+        }
     }
 }

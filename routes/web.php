@@ -38,6 +38,8 @@ Route::middleware(['exam.date', 'check.abandoned.exam'])->group(function () {
             Route::middleware(['registered.examinee'])->group(function () {
                 Route::get('/exam/instructions', [ExamController::class, 'instructions'])->name('exam.instructions');
                 Route::post('/exam/start-exam', [ExamController::class, 'startExam'])->name('exam.start-exam');
+                Route::get('/exam/resume', [ExamController::class, 'resumeExam'])->name('exam.resume')
+                        ->middleware(['valid.token', 'accepted.privacy', 'registered.examinee']);
                 
                 Route::middleware(['started.exam'])->group(function () {
                     Route::get('/exam/take', [ExamController::class, 'takeExam'])->name('exam.take');
@@ -52,7 +54,6 @@ Route::middleware(['exam.date', 'check.abandoned.exam'])->group(function () {
             });
         });
     });
-
 });
 
 /*=============================

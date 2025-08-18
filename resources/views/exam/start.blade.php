@@ -8,6 +8,14 @@
                 <div class="card-header">Enter Exam Token</div>
 
                 <div class="card-body">
+                    @if($examinee && $examinee->last_question_number)
+                        <div class="alert alert-info mt-4">
+                            <p>You have an exam in progress. Would you like to resume?</p>
+                            <a href="{{ route('exam.resume') }}" class="btn btn-primary">
+                                Resume Exam (Question {{ $examinee->last_question_number }})
+                            </a>
+                        </div>
+                    @endif
                     <p class="text-center">Please enter your exam token to start the exam.</p>
                     <form method="POST" action="{{ route('exam.validate-token') }}">
                         @csrf

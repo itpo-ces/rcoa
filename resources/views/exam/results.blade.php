@@ -46,4 +46,23 @@
     // make the id=g-timer element invisible
     document.getElementById('g-timer').style.display = 'none';
 </script>
+<script>
+document.getElementById('finish-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    fetch(this.action, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+        },
+        body: new FormData(this)
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>
 @endsection
