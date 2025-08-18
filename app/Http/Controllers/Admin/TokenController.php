@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use App\Models\Token;
 use App\Models\Examinee;
 use Endroid\QrCode\QrCode;
@@ -174,14 +176,75 @@ class TokenController extends Controller
                 data-token-id="'.$token->id.'"
                 data-token="'.$token->token.'"
                 title="Show QR Code">
-                <i class="fas fa-qrcode"></i> QR
+                <i class="fas fa-qrcode"></i> View QR
             </a>
             <a href="#" 
-                class="btn btn-outline-danger delete-btn"
+                class="btn btn-outline-danger delete-btn d-none"
                 data-token-id="'.$token->id.'"
                 title="Delete Token">
                 <i class="fas fa-trash"></i> Delete
             </a>
         </div>';
+    }
+
+    public function generateTokens(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'token_count' => 'required|integer|min:1|max:1000',
+            'token_length' => 'integer|min:8|max:32'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+
+        $count = $validated['token_count'];
+        $length = $validated['token_length'] ?? 16;
+
+        try {
+            DB::beginTransaction();
+            
+            $generated = 0;
+            $attempts = 0;
+            $maxAttempts = $count * 2; // Prevent infinite loops
+            
+            while ($generated < $count && $attempts < $maxAttempts) {
+                $token = Str::random($length);
+                
+                // Check if token already exists
+                if (!Token::where('token', $token)->exists()) {
+                    Token::create(['token' => $token]);
+                    $generated++;
+                }
+                
+                $attempts++;
+            }
+            
+            DB::commit();
+            
+            if ($generated < $count) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Generated $generated tokens (couldn't generate all requested due to uniqueness constraints)"
+                ]);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully generated $count tokens"
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating tokens: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -14,7 +14,8 @@ class Exam extends Model
         'start_time',
         'end_time',
         'duration_minutes',
-        'number_of_questions'
+        'number_of_questions',
+        'is_active',
     ];
 
     protected $casts = [
@@ -23,6 +24,7 @@ class Exam extends Model
         'number_of_questions' => 'integer',
         'start_time' => 'datetime:H:i:s',
         'end_time' => 'datetime:H:i:s',
+        'is_active' => 'boolean',
     ];
     
     public function questions()

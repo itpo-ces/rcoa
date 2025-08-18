@@ -184,42 +184,147 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+            <form id="addItemForm" method="POST" action="{{ route('examination.store') }}" enctype="multipart/form-data">
+            @csrf
             <div class="modal-body">
-                <form id="add_item_form">
-                    <div class="form-group">
-                        <label for="title">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" placeholder="Enter title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="exam_date">Exam Date</label>
-                        <input type="date" class="form-control" id="exam_date" name="exam_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="start_time">Start Time</label>
-                        <input type="time" class="form-control" id="start_time" name="start_time" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="end_time">End Time</label>
-                        <input type="time" class="form-control" id="end_time" name="end_time" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="duration">Duration</label>
-                        <input type="number" class="form-control" id="duration" name="duration" placeholder="Enter duration in minutes" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="no_of_questions">No of Questions</label>
-                        <input type="number" class="form-control" id="no_of_questions" name="no_of_questions" placeholder="Enter no of questions" required>
-                    </div>
-                </form>
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" placeholder="Enter title">
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="form-group">
+                    <label for="exam_date">Exam Date</label>
+                    <input type="date" class="form-control" id="exam_date" name="exam_date">
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="form-group">
+                    <label for="start_time">Start Time</label>
+                    <input type="time" class="form-control" id="start_time" name="start_time">
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="form-group">
+                    <label for="end_time">End Time</label>
+                    <input type="time" class="form-control" id="end_time" name="end_time">
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="form-group">
+                    <label for="duration_minutes">Duration</label>
+                    <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" placeholder="Enter duration in minutes">
+                    <div class="invalid-feedback"></div>
+                </div>
+                <div class="form-group">
+                    <label for="number_of_questions">No of Questions</label>
+                    <input type="number" class="form-control" id="number_of_questions" name="number_of_questions" placeholder="Enter no of questions">
+                    <div class="invalid-feedback"></div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" form="add_item_form">Add Item</button>
+                <button type="submit" class="btn btn-primary" id="saveItemBtn">Submit</button>
             </div>
+            </form>
         </div>
     </div>
 </div>
-<!-- Import Examination Modal -->
+
+<!-- Edit Item Modal -->
+<div class="modal fade" id="edit_item_modal" tabindex="-1" role="dialog" aria-labelledby="edit_item_modal_label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="edit_item_modal_label">Edit Item</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editItemForm" method="POST" action="{{ route('examination.update') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="id" id="edit_id" value="">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_title">Title</label>
+                        <input type="text" class="form-control" id="edit_title" name="title" placeholder="Enter title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_exam_date">Exam Date</label>
+                        <input type="date" class="form-control" id="edit_exam_date" name="exam_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_start_time">Start Time</label>
+                        <input type="time" class="form-control" id="edit_start_time" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_end_time">End Time</label>
+                        <input type="time" class="form-control" id="edit_end_time" name="end_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_duration">Duration</label>
+                        <input type="number" class="form-control" id="edit_duration" name="duration_minutes" placeholder="Enter duration in minutes" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_no_of_questions">No of Questions</label>
+                        <input type="number" class="form-control" id="edit_no_of_questions" name="number_of_questions" placeholder="Enter no of questions" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="updateItemBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Item Modal -->
+<div class="modal fade" id="delete_item_modal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="deleteUserForm" method="POST" action="{{ route('examination.delete') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="delete_id" value="">
+                    <p class="text-center">Are you sure you want to delete this question?<br>
+                    <strong class="text-muted" id="delete_title"></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Item Modal -->
+<div class="modal fade" id="restore_item_modal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form id="restoreUserForm" method="POST" action="{{ route('examination.restore') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="restoreModalLabel">Restore Confirmation</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="restore_id" value="">
+                    <p class="text-center">Are you sure you want to restore this question?<br> <strong id="restore_title"></strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" id="confirmRestore">Restore</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @endsection
 
@@ -404,5 +509,420 @@
             }
         });
     });
+</script>
+<script>
+    // Handle add item form submission
+    $('#addItemForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = $('#saveItemBtn');
+        const originalBtnText = submitBtn.html();
+
+        clearErrors();
+        disableSubmitButton();
+            
+        // AJAX request
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: handleSuccess,
+            error: handleError,
+            complete: enableSubmitButton
+        });
+
+        // Helper function to show field-specific errors
+        function showFieldError(field, message) {
+            field.addClass('is-invalid');
+            const existingFeedback = field.next('.invalid-feedback');
+            if (existingFeedback.length) {
+                existingFeedback.text(message);
+            } else {
+                field.closest('.form-group').append('<div class="invalid-feedback">' + message + '</div>');
+            }
+        }
+
+        // Handle clearing of previous errors
+        function clearErrors() {
+            form.find('.is-invalid').removeClass('is-invalid');
+            form.find('.invalid-feedback').remove();
+        }
+
+        // Handle submit button state
+        function enableSubmitButton() {
+            submitBtn.prop('disabled', false).html('Save');
+        }
+        
+        function disableSubmitButton() {
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+        }
+
+        function handleSuccess(response) {
+            toastr.success(response.message || 'Question added successfully!', 'Success', {
+                timeOut: 3000,
+                progressBar: true,
+                closeButton: true,
+                newestOnTop: true
+            });
+            enableSubmitButton();
+            // Reset form
+            form[0].reset();
+            clearErrors();
+            // Hide modal
+            $('#add_item_modal').modal('hide');
+            // Reload DataTable
+            $('#examinationTable').DataTable().ajax.reload();
+        }
+
+        function handleError(xhr) {
+            enableSubmitButton();
+            
+            if (xhr.status === 422) {
+                // Validation errors
+                const errors = xhr.responseJSON.errors;
+                $.each(errors, function(key, value) {
+                    const input = form.find('[name="' + key + '"]');
+                    showFieldError(input, Array.isArray(value) ? value[0] : value);
+                });
+            } else {
+                const errorMessage = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred. Please try again.';
+                    
+                toastr.error(errorMessage, 'Error', {
+                    timeOut: 3000,
+                    progressBar: true,
+                    closeButton: true,
+                    newestOnTop: true
+                });
+            }
+        }
+    });
+
+    // Event listener for modal close
+    $('#add_item_modal').on('hidden.bs.modal', function() {
+        $('#addItemForm')[0].reset();
+        $('#addItemForm').find('.is-invalid').removeClass('is-invalid');
+        $('#addItemForm').find('.invalid-feedback').remove();
+        $('#saveItemBtn').prop('disabled', false).html('Save');
+    });
+</script>
+<script>
+    // Inside the JavaScript file or script section where you handle modal opening - EDIT
+    $('#edit_item_modal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var item = button.data('item');
+
+        console.log(item); // Check the console to verify the data structure
+
+        $('#edit_id').val(item.id);
+        $('#edit_title').val(item.title).trigger('change');
+        $('#edit_exam_date').val(item.exam_date).trigger('change');
+        $('#edit_start_time').val(item.start_time).trigger('change');
+        $('#edit_end_time').val(item.end_time).trigger('change');
+        $('#edit_duration').val(item.duration_minutes);
+        $('#edit_no_of_questions').val(item.number_of_questions);
+    });
+    // Handle edit item form submission
+    $('#editItemForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = $('#updateItemBtn');
+        const originalBtnText = submitBtn.html();
+
+        clearErrors();
+        disableSubmitButton();
+            
+        // AJAX request
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: handleSuccess,
+            error: handleError,
+            complete: enableSubmitButton
+        });
+
+        // Helper function to show field-specific errors
+        function showFieldError(field, message) {
+            field.addClass('is-invalid');
+            const existingFeedback = field.next('.invalid-feedback');
+            if (existingFeedback.length) {
+                existingFeedback.text(message);
+            } else {
+                field.closest('.form-group').append('<div class="invalid-feedback">' + message + '</div>');
+            }
+        }
+
+        // Handle clearing of previous errors
+        function clearErrors() {
+            form.find('.is-invalid').removeClass('is-invalid');
+            form.find('.invalid-feedback').remove();
+        }
+
+        // Handle submit button state
+        function enableSubmitButton() {
+            submitBtn.prop('disabled', false).html('Save Changes');
+        }
+        
+        function disableSubmitButton() {
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...');
+        }
+
+        function handleSuccess(response) {
+            toastr.success(response.message || 'Exam updated successfully!', 'Success', {
+                timeOut: 3000,
+                progressBar: true,
+                closeButton: true,
+                newestOnTop: true
+            });
+            enableSubmitButton();
+            // Hide modal
+            $('#edit_item_modal').modal('hide');
+            // Reload DataTable
+            $('#examinationTable').DataTable().ajax.reload();
+        }
+
+        function handleError(xhr) {
+            enableSubmitButton();
+            
+            if (xhr.status === 422) {
+                // Validation errors
+                const errors = xhr.responseJSON.errors;
+                $.each(errors, function(key, value) {
+                    const input = form.find('[name="' + key + '"]');
+                    showFieldError(input, Array.isArray(value) ? value[0] : value);
+                });
+            } else {
+                const errorMessage = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred. Please try again.';
+                    
+                toastr.error(errorMessage, 'Error', {
+                    timeOut: 3000,
+                    progressBar: true,
+                    closeButton: true,
+                    newestOnTop: true
+                });
+            }
+        }
+    });
+
+    // Event listener for modal close
+    $('#edit_item_modal').on('hidden.bs.modal', function() {
+        $('#editItemForm').find('.is-invalid').removeClass('is-invalid');
+        $('#editItemForm').find('.invalid-feedback').remove();
+        $('#updateItemBtn').prop('disabled', false).html('Save Changes');
+    });
+</script>
+<script>
+    // Inside the JavaScript file or script section where you handle modal opening - DELETE
+    $('#delete_item_modal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var item = button.data('item');
+        var itemID = item.id;
+
+        console.log(item);
+
+        $('#delete_id').val(item.id);
+        $('#delete_title').text(item.title);
+    });
+
+    // Handle delete item form submission
+    $('#deleteUserForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = $('#confirmDelete');
+        const originalBtnText = submitBtn.html();
+
+        clearErrors();
+        disableSubmitButton();
+            
+        // AJAX request
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: handleSuccess,
+            error: handleError,
+            complete: enableSubmitButton
+        });
+
+        // Helper function to show field-specific errors
+        function showFieldError(field, message) {
+            field.addClass('is-invalid');
+            const existingFeedback = field.next('.invalid-feedback');
+            if (existingFeedback.length) {
+                existingFeedback.text(message);
+            } else {
+                field.closest('.form-group').append('<div class="invalid-feedback">' + message + '</div>');
+            }
+        }
+
+        // Handle clearing of previous errors
+        function clearErrors() {
+            form.find('.is-invalid').removeClass('is-invalid');
+            form.find('.invalid-feedback').remove();
+        }
+
+        // Handle submit button state
+        function enableSubmitButton() {
+            submitBtn.prop('disabled', false).html('Delete');
+        }
+        
+        function disableSubmitButton() {
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...');
+        }
+
+        function handleSuccess(response) {
+            toastr.success(response.message || 'Item deleted successfully!', 'Success', {
+                timeOut: 3000,
+                progressBar: true,
+                closeButton: true,
+                newestOnTop: true
+            });
+            enableSubmitButton();
+            // Hide modal
+            $('#delete_item_modal').modal('hide');
+            // Reload DataTable
+            $('#examinationTable').DataTable().ajax.reload();
+        }
+
+        function handleError(xhr) {
+            enableSubmitButton();
+            
+            if (xhr.status === 422) {
+                // Validation errors
+                const errors = xhr.responseJSON.errors;
+                $.each(errors, function(key, value) {
+                    const input = form.find('[name="' + key + '"]');
+                    showFieldError(input, Array.isArray(value) ? value[0] : value);
+                });
+            } else {
+                const errorMessage = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred. Please try again.';
+                    
+                toastr.error(errorMessage, 'Error', {
+                    timeOut: 3000,
+                    progressBar: true,
+                    closeButton: true,
+                    newestOnTop: true
+                });
+            }
+        }
+    });
+
+    // Event listener for modal close
+    $('#delete_item_modal').on('hidden.bs.modal', function() {
+        $('#deleteUserForm').find('.is-invalid').removeClass('is-invalid');
+        $('#deleteUserForm').find('.invalid-feedback').remove();
+        $('#confirmDelete').prop('disabled', false).html('Delete');
+    });
+</script>
+<script>
+    // Inside the JavaScript file or script section where you handle modal opening - RESTORE
+    $('#restore_item_modal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var item = button.data('item');
+        var itemID = item.id;
+
+        console.log(item);
+
+        $('#restore_id').val(item.id);
+        $('#restore_title').text(item.title);
+    });
+
+    // Handle delete item form submission
+    $('#restoreUserForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = $('#confirmRestore');
+        const originalBtnText = submitBtn.html();
+
+        clearErrors();
+        disableSubmitButton();
+            
+        // AJAX request
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: handleSuccess,
+            error: handleError,
+            complete: enableSubmitButton
+        });
+
+        // Helper function to show field-specific errors
+        function showFieldError(field, message) {
+            field.addClass('is-invalid');
+            const existingFeedback = field.next('.invalid-feedback');
+            if (existingFeedback.length) {
+                existingFeedback.text(message);
+            } else {
+                field.closest('.form-group').append('<div class="invalid-feedback">' + message + '</div>');
+            }
+        }
+
+        // Handle clearing of previous errors
+        function clearErrors() {
+            form.find('.is-invalid').removeClass('is-invalid');
+            form.find('.invalid-feedback').remove();
+        }
+
+        // Handle submit button state
+        function enableSubmitButton() {
+            submitBtn.prop('disabled', false).html('Restore');
+        }
+        
+        function disableSubmitButton() {
+            submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Restoring...');
+        }
+
+        function handleSuccess(response) {
+            toastr.success(response.message || 'Item restored successfully!', 'Success', {
+                timeOut: 3000,
+                progressBar: true,
+                closeButton: true,
+                newestOnTop: true
+            });
+            enableSubmitButton();
+            // Hide modal
+            $('#restore_item_modal').modal('hide');
+            // Reload DataTable
+            $('#examinationTable').DataTable().ajax.reload();
+        }
+
+        function handleError(xhr) {
+            enableSubmitButton();
+            
+            if (xhr.status === 422) {
+                // Validation errors
+                const errors = xhr.responseJSON.errors;
+                $.each(errors, function(key, value) {
+                    const input = form.find('[name="' + key + '"]');
+                    showFieldError(input, Array.isArray(value) ? value[0] : value);
+                });
+            } else {
+                const errorMessage = xhr.responseJSON && xhr.responseJSON.message 
+                    ? xhr.responseJSON.message 
+                    : 'An error occurred. Please try again.';
+                    
+                toastr.error(errorMessage, 'Error', {
+                    timeOut: 3000,
+                    progressBar: true,
+                    closeButton: true,
+                    newestOnTop: true
+                });
+            }
+        }
+    });
+
+    // Event listener for modal close
+    $('#restore_item_modal').on('hidden.bs.modal', function() {
+        $('#restoreUserForm').find('.is-invalid').removeClass('is-invalid');
+        $('#restoreUserForm').find('.invalid-feedback').remove();
+        $('#confirmRestore').prop('disabled', false).html('Restore');
+    })
 </script>
 @endsection

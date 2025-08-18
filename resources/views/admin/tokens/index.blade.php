@@ -63,6 +63,26 @@
     #tokenTable td {
         vertical-align: middle;
     }
+
+    #generate_token_modal .modal-body {
+        padding: 20px;
+    }
+
+    #generate_token_modal .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    #generate_token_modal .invalid-feedback {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: #dc3545;
+    }
+
+    #generate_token_modal .text-muted {
+        font-size: 0.8rem;
+        color: #6c757d !important;
+    }
 </style>
 @endsection
 
@@ -184,6 +204,41 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generate Token Modal -->
+<div class="modal fade" id="generate_token_modal" tabindex="-1" role="dialog" aria-labelledby="generate_token_modal_label" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generate_token_modal_label">Generate Tokens</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="generateTokenForm" method="POST" action="{{ route('tokens.generate') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="token_count" class="required">Number of Tokens to Generate</label>
+                        <input type="number" class="form-control" id="token_count" name="token_count" 
+                               placeholder="Enter number of tokens" min="1" max="1000" required>
+                        <small class="form-text text-muted">Maximum 1000 tokens at a time</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="token_length">Token Length</label>
+                        <input type="number" class="form-control" id="token_length" name="token_length" 
+                               placeholder="Enter token length" min="8" max="32" value="16">
+                        <small class="form-text text-muted">Default is 16 characters (8-32 allowed)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="generateTokensBtn">Generate Tokens</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -340,6 +395,25 @@
             }
        });
 
+       // Auto-refresh functionality
+        var autoRefreshInterval = setInterval(function() {
+            $('#tokenTable').DataTable().ajax.reload(null, false);
+        }, 3000);
+
+        // Clean up on page unload
+        $(window).on('beforeunload', function() {
+            clearInterval(autoRefreshInterval);
+        });
+
+        // Pause auto-refresh when modals are open
+        $(document).on('shown.bs.modal', function() {
+            clearInterval(autoRefreshInterval);
+        }).on('hidden.bs.modal', function() {
+            autoRefreshInterval = setInterval(function() {
+                $('#tokenTable').DataTable().ajax.reload(null, false);
+            }, 3000);
+        });
+
         // Filter event handlers
         $('#tokenFilter, #examineeFilter, #statusFilter').on('change keyup', function() {
             table.ajax.reload();
@@ -433,6 +507,74 @@
                 });
             }
         });
+    });
+</script>
+<script>
+    // Generate Tokens Form Handling
+    $('#generateTokenForm').on('submit', function(e) {
+        e.preventDefault();
+        const form = $(this);
+        const submitBtn = $('#generateTokensBtn');
+        const originalBtnText = submitBtn.html();
+        
+        // Clear previous errors
+        form.find('.is-invalid').removeClass('is-invalid');
+        form.find('.invalid-feedback').remove();
+        
+        // Disable button and show loading state
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message, 'Success', {
+                        timeOut: 3000,
+                        progressBar: true
+                    });
+                    // Close modal
+                    $('#generate_token_modal').modal('hide');
+                    // Reset form
+                    form[0].reset();
+                    // Reload table
+                    $('#tokenTable').DataTable().ajax.reload();
+                } else {
+                    toastr.error(response.message, 'Error', {
+                        timeOut: 3000,
+                        progressBar: true
+                    });
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    // Validation errors
+                    const errors = xhr.responseJSON.errors;
+                    $.each(errors, function(key, value) {
+                        const input = form.find('[name="' + key + '"]');
+                        input.addClass('is-invalid');
+                        input.after('<div class="invalid-feedback">' + value + '</div>');
+                    });
+                } else {
+                    toastr.error('An error occurred while generating tokens', 'Error', {
+                        timeOut: 3000,
+                        progressBar: true
+                    });
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalBtnText);
+            }
+        });
+    });
+
+    // Reset form when modal is closed
+    $('#generate_token_modal').on('hidden.bs.modal', function() {
+        $('#generateTokenForm')[0].reset();
+        $('#generateTokenForm').find('.is-invalid').removeClass('is-invalid');
+        $('#generateTokenForm').find('.invalid-feedback').remove();
+        $('#generateTokensBtn').prop('disabled', false).html('Generate Tokens');
     });
 </script>
 @endsection

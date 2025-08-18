@@ -104,7 +104,7 @@
 
             <li class="nav-item">
                 <a href="{{ route('examination.index') }}" class="nav-link @if(Route::currentRouteName() == 'examination.index') active @endif">
-                  <i class="nav-icon fas fa-user-graduate"></i>
+                  <i class="nav-icon fas fa-cubes"></i>
                   <p>
                     Examination
                   </p>
@@ -113,7 +113,7 @@
 
             <li class="nav-item">
                 <a href="{{ route('questionnaire.index') }}" class="nav-link @if(Route::currentRouteName() == 'questionnaire.index') active @endif">
-                  <i class="nav-icon fas fa-user-tie"></i>
+                  <i class="nav-icon fas fa-list"></i>
                   <p>
                     Questionnaire
                   </p>
@@ -122,7 +122,7 @@
             
             <li class="nav-item">
                 <a href="{{ route('results.index') }}" class="nav-link @if(Route::currentRouteName() == 'results.index') active @endif">
-                  <i class="nav-icon fas fa-user-graduate"></i>
+                  <i class="nav-icon fas fa-table"></i>
                   <p>
                     Results
                   </p>
@@ -140,7 +140,7 @@
 
             <li class="nav-item">
                 <a href="{{ route('tokens.index') }}" class="nav-link @if(Route::currentRouteName() == 'tokens.index') active @endif">
-                  <i class="nav-icon fas fa-user-graduate"></i>
+                  <i class="nav-icon fas fa-key"></i>
                   <p>
                     Token Management
                   </p>
@@ -149,7 +149,7 @@
 
             <li class="nav-item @if(Route::currentRouteName() == 'analysis.question.index') menu-open @endif">
               <a href="#" class="nav-link @if(Route::currentRouteName() == 'analysis.question.index') active @endif">
-                  <i class="nav-icon fas fa-truck-moving"></i>
+                  <i class="nav-icon fas fa-chart-line"></i>
                   <p>
                       Assessment Analysis
                       <i class="fas fa-angle-left right"></i>

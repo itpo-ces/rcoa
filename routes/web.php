@@ -45,7 +45,6 @@ Route::middleware(['exam.date', 'check.abandoned.exam'])->group(function () {
                     Route::get('/exam/take', [ExamController::class, 'takeExam'])->name('exam.take');
                     Route::post('/exam/save-answer', [ExamController::class, 'saveAnswer'])->name('exam.save-answer');
                     Route::get('/exam/question/{question_number}', [ExamController::class, 'showQuestion'])->name('exam.question');
-                    // Route::post('/exam/submit', [ExamController::class, 'submitExam'])->name('exam.submit');
                     Route::match(['get', 'post'], '/exam/submit', [ExamController::class, 'submitExam'])->name('exam.submit');
                     Route::get('/exam/certification', [ExamController::class, 'showCertification'])->name('exam.certification');
                     Route::get('/exam/results', [ExamController::class, 'showResults'])->name('exam.results');
@@ -101,6 +100,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Examination Routes
     Route::get('/examination', [ExaminationController::class, 'index'])->name('examination.index');
     Route::post('/examination/data', [ExaminationController::class, 'postExaminationData'])->name('examination.data');
+    Route::post('/examination/store', [ExaminationController::class, 'store'])->name('examination.store');
+    Route::post('/examination/update', [ExaminationController::class, 'update'])->name('examination.update');
+    Route::post('/examination/delete', [ExaminationController::class, 'delete'])->name('examination.delete');
+    Route::post('/examination/restore', [ExaminationController::class, 'restore'])->name('examination.restore');
+    Route::post('/examination/import', [ExaminationController::class, 'import'])->name('examination.import');
 
     // Results Routes
     Route::get('/results', [ExamResultController::class, 'index'])->name('results.index');
