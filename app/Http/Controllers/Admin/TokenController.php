@@ -130,6 +130,51 @@ class TokenController extends Controller
         }
     }
 
+    // private function getActionButtons($token)
+    // {
+    //     return '<div class="btn-group btn-group-sm">
+    //         <a href="' . route('tokens.qrcode', ['tokenId' => $token->id]) . '" 
+    //             class="btn btn-outline-info qr-btn"
+    //             data-token-id="'.$token->id.'"
+    //             data-token="'.$token->token.'"
+    //             title="Show QR Code">
+    //             <i class="fas fa-qrcode"></i> View QR
+    //         </a>
+    //         <a href="#" 
+    //             class="btn btn-outline-danger delete-btn d-none"
+    //             data-token-id="'.$token->id.'"
+    //             title="Delete Token">
+    //             <i class="fas fa-trash"></i> Delete
+    //         </a>
+    //     </div>';
+    // }
+
+    private function getActionButtons($token)
+    {
+        $buttons = '<div class="btn-group btn-group-sm">';
+        
+        // Only show QR button if is_used = 1
+        if ($token->status === 'available' || $token->status === 'in_use') {
+            $buttons .= '<a href="' . route('tokens.qrcode', ['tokenId' => $token->id]) . '" 
+                class="btn btn-outline-info qr-btn"
+                data-token-id="'.$token->id.'"
+                data-token="'.$token->token.'"
+                title="Show QR Code">
+                <i class="fas fa-qrcode"></i> View QR
+            </a>';
+        }
+        
+        $buttons .= '<a href="#" 
+            class="btn btn-outline-danger delete-btn d-none"
+            data-token-id="'.$token->id.'"
+            title="Delete Token">
+            <i class="fas fa-trash"></i> Delete
+        </a>
+        </div>';
+        
+        return $buttons;
+}
+
     public function generateQRCode($tokenId)
     {
         $token = Token::findOrFail($tokenId);
@@ -166,25 +211,6 @@ class TokenController extends Controller
             \Log::error('Error deleting tokens: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to delete tokens'], 500);
         }
-    }
-
-    private function getActionButtons($token)
-    {
-        return '<div class="btn-group btn-group-sm">
-            <a href="' . route('tokens.qrcode', ['tokenId' => $token->id]) . '" 
-                class="btn btn-outline-info qr-btn"
-                data-token-id="'.$token->id.'"
-                data-token="'.$token->token.'"
-                title="Show QR Code">
-                <i class="fas fa-qrcode"></i> View QR
-            </a>
-            <a href="#" 
-                class="btn btn-outline-danger delete-btn d-none"
-                data-token-id="'.$token->id.'"
-                title="Delete Token">
-                <i class="fas fa-trash"></i> Delete
-            </a>
-        </div>';
     }
 
     public function generateTokens(Request $request)
